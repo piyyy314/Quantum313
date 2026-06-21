@@ -1,0 +1,6 @@
+{
+  "name": "Advanced Security Toolkit",
+  "description": "An interactive, multi-module cybersecurity suite for static analysis, cryptographic validation, local log inspection, file entropy visualization, and simulated threat monitoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
