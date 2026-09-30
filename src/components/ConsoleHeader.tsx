@@ -38,17 +38,17 @@ export default function ConsoleHeader({ threatLevel, setThreatLevel, activeInter
   const getThreatColor = () => {
     switch (threatLevel) {
       case 'low': return 'text-emerald-400 bg-white/[0.02] border-white/5 shadow-[rgba(16,185,129,0.05)_0px_0px_10px]';
-      case 'medium': return 'text-[#D4AF37] bg-white/[0.02] border-white/5 shadow-[rgba(212,175,55,0.05)_0px_0px_10px]';
+      case 'medium': return 'text-[#00f0ff] bg-white/[0.02] border-white/5 shadow-[rgba(0,240,255,0.05)_0px_0px_10px]';
       case 'high': return 'text-rose-400 bg-rose-950/20 border-rose-950/80 shadow-[rgba(244,63,94,0.05)_0px_0px_10px]';
     }
   };
 
   return (
-    <div id="console-header" className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 border-b border-white/5 bg-[#080809] select-none">
+    <div id="console-header" className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 border-b border-white/5 bg-slate-950/40 backdrop-blur-md select-none">
       {/* Brand & Systems Status */}
       <div className="flex flex-col justify-between border border-white/5 p-4 bg-black/20 rounded">
         <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.6)] animate-pulse" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.6)] animate-pulse" />
           <h1 className="font-serif text-sm font-light tracking-[0.25em] text-zinc-100 uppercase">
             Aegis Unified Suite
           </h1>
@@ -75,7 +75,7 @@ export default function ConsoleHeader({ threatLevel, setThreatLevel, activeInter
           </div>
           <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-1">
             <motion.div 
-              className="bg-[#D4AF37] h-full"
+              className="bg-[#00f0ff] h-full shadow-[0_0_8px_rgba(0,240,255,0.4)]"
               animate={{ width: `${cpuLoad}%` }}
               transition={{ duration: 1 }}
             />
@@ -118,7 +118,7 @@ export default function ConsoleHeader({ threatLevel, setThreatLevel, activeInter
               onClick={() => setThreatLevel(lev)}
               className={`flex-1 py-1 text-[9px] tracking-wider font-mono font-bold uppercase rounded border transition-all cursor-pointer ${
                 threatLevel === lev 
-                ? 'bg-[#D4AF37]/90 text-black border-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.3)]'
+                ? 'bg-[#00f0ff]/90 text-black border-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.3)]'
                 : 'bg-black/40 text-white/40 border-white/5 hover:border-white/10 hover:text-white/80'
               }`}
             >

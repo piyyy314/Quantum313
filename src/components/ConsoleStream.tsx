@@ -130,7 +130,7 @@ export default function ConsoleStream() {
           module: 'KERNEL',
           level: 'INFO',
           message: '🟢 SecLink: Real-time full-stack WebSocket connection established with shadow313 proxy!'
-        }
+        } as LogMessage
       ].slice(-500));
     });
 
@@ -143,7 +143,7 @@ export default function ConsoleStream() {
           module: 'KERNEL',
           level: 'WARN',
           message: '🔴 SecLink: Live backend telemetry socket disconnected. Reconnecting...'
-        }
+        } as LogMessage
       ].slice(-500));
     });
 
@@ -308,11 +308,11 @@ export default function ConsoleStream() {
       {/* Component Title Bar */}
       <div className="border-b border-white/5 bg-gradient-to-r from-black/80 to-[#101014] px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 select-none">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 border border-[#D4AF37]/35 bg-[#D4AF37]/5 text-[#D4AF37] rounded-md">
+          <div className="p-2 border border-[#00f0ff]/35 bg-[#00f0ff]/5 text-[#00f0ff] rounded-md">
             <Terminal size={15} className="animate-pulse" />
           </div>
           <div>
-            <span className="text-[9px] tracking-widest text-[#D4AF37]/80 uppercase font-bold flex items-center gap-1">
+            <span className="text-[9px] tracking-widest text-[#00f0ff]/80 uppercase font-bold flex items-center gap-1">
               SANDBOX FORENSICS CORE <Lock size={9} />
             </span>
             <h3 className="text-sm font-serif font-light text-zinc-100 flex items-center gap-1.5 leading-tight">
@@ -327,7 +327,7 @@ export default function ConsoleStream() {
             onClick={() => setActiveTab('CONSOLE')}
             className={`px-3 py-1.5 rounded text-[10px] uppercase tracking-wider transition-all font-bold cursor-pointer ${
               activeTab === 'CONSOLE'
-                ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/25 font-bold'
+                ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/25 font-bold'
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
@@ -337,7 +337,7 @@ export default function ConsoleStream() {
             onClick={() => setActiveTab('TAURI')}
             className={`px-3 py-1.5 rounded text-[10px] uppercase tracking-wider transition-all font-bold cursor-pointer flex items-center gap-1 ${
               activeTab === 'TAURI'
-                ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/25 font-bold'
+                ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/25 font-bold'
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
@@ -360,15 +360,15 @@ export default function ConsoleStream() {
             </div>
             <div className="bg-[#0D0D11] border border-white/5 rounded p-2 flex flex-col justify-center">
               <span className="text-[8px] text-white/30 uppercase tracking-wide">Hypervisor Events</span>
-              <strong className="text-[#D4AF37] text-xs mt-0.5 font-mono">{counterStats.hypervisor} traps</strong>
+              <strong className="text-[#00f0ff] text-xs mt-0.5 font-mono">{counterStats.hypervisor} traps</strong>
             </div>
             <div className="bg-[#0D0D11] border border-white/5 rounded p-2 flex flex-col justify-center">
               <span className="text-[8px] text-white/30 uppercase tracking-wide">Mitigations Bound</span>
-              <strong className="text-rose-450 text-xs mt-0.5 font-mono">{counterStats.criticals} blocks</strong>
+              <strong className="text-rose-400 text-xs mt-0.5 font-mono">{counterStats.criticals} blocks</strong>
             </div>
             <div className="bg-[#0D0D11] border border-white/5 rounded p-2 flex flex-col justify-center col-span-2 md:col-span-1">
               <span className="text-[8px] text-white/30 uppercase tracking-wide">Module Integrity</span>
-              <strong className="text-emerald-450 text-xs mt-0.5 font-mono flex items-center gap-1">
+              <strong className="text-emerald-400 text-xs mt-0.5 font-mono flex items-center gap-1">
                 <CheckCircle size={11} /> SEALED
               </strong>
             </div>
@@ -399,24 +399,24 @@ export default function ConsoleStream() {
                     </>
                   )}
                 </button>
-
+ 
                 <div className="flex items-center bg-[#07070A] border border-white/5 rounded p-0.5 text-[10px]">
                   <span className="px-2 text-[9px] text-white/30 font-bold uppercase tracking-wider">Delay:</span>
                   <button 
                     onClick={() => setSpeed(2000)}
-                    className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${speed === 2000 ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20 font-bold' : 'text-zinc-550 hover:text-zinc-350'}`}
+                    className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${speed === 2000 ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/20 font-bold' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     2.0s
                   </button>
                   <button 
                     onClick={() => setSpeed(1000)}
-                    className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${speed === 1000 ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20 font-bold' : 'text-zinc-550 hover:text-zinc-350'}`}
+                    className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${speed === 1000 ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/20 font-bold' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     1.0s
                   </button>
                   <button 
                     onClick={() => setSpeed(300)}
-                    className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${speed === 300 ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20 font-bold' : 'text-zinc-550 hover:text-zinc-350'}`}
+                    className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${speed === 300 ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/20 font-bold' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     0.3s
                   </button>
@@ -445,7 +445,7 @@ export default function ConsoleStream() {
                     type="checkbox"
                     checked={autoScroll}
                     onChange={(e) => setAutoScroll(e.target.checked)}
-                    className="rounded border-zinc-800 bg-black text-[#D4AF37]"
+                    className="rounded border-zinc-800 bg-black text-[#00f0ff]"
                   />
                   <span>Auto Scroll</span>
                 </label>
@@ -456,7 +456,7 @@ export default function ConsoleStream() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2.5 border-t border-white/5">
               {/* Search input text */}
               <div className="md:col-span-4 relative">
-                <span className="absolute left-2.5 top-2 text-[#D4AF37]">
+                <span className="absolute left-2.5 top-2 text-[#00f0ff]">
                   <Search size={11} />
                 </span>
                 <input
@@ -464,7 +464,7 @@ export default function ConsoleStream() {
                   placeholder="Regex grep matching log entries..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-black/70 border border-white/5 hover:border-white/10 focus:border-[#D4AF37]/50 rounded px-8 py-1.5 text-zinc-300 placeholder-zinc-650 focus:outline-none font-mono text-[10px] transition-all"
+                  className="w-full bg-black/70 border border-white/5 hover:border-white/10 focus:border-[#00f0ff]/50 rounded px-8 py-1.5 text-zinc-300 placeholder-zinc-650 focus:outline-none font-mono text-[10px] transition-all"
                 />
               </div>
 
@@ -478,8 +478,8 @@ export default function ConsoleStream() {
                       onClick={() => setActiveModuleFilter(mod)}
                       className={`px-2 py-0.5 rounded transition-all font-mono font-bold cursor-pointer flex-1 text-center ${
                         activeModuleFilter === mod 
-                          ? 'bg-[#D4AF37]/15 text-[#D4AF37] font-bold' 
-                          : 'text-zinc-550 hover:text-zinc-350'
+                          ? 'bg-[#00f0ff]/15 text-[#00f0ff] font-bold' 
+                          : 'text-zinc-500 hover:text-zinc-300'
                       }`}
                     >
                       {mod}
@@ -498,8 +498,8 @@ export default function ConsoleStream() {
                       onClick={() => setActiveLevelFilter(lvl)}
                       className={`px-1.5 py-0.5 rounded transition-all font-mono text-[8px] font-bold cursor-pointer flex-1 text-center ${
                         activeLevelFilter === lvl 
-                          ? 'bg-[#D4AF37]/15 text-[#D4AF37] font-bold' 
-                          : 'text-zinc-550 hover:text-zinc-350'
+                          ? 'bg-[#00f0ff]/15 text-[#00f0ff] font-bold' 
+                          : 'text-zinc-500 hover:text-zinc-300'
                       }`}
                     >
                       {lvl}
@@ -536,17 +536,17 @@ export default function ConsoleStream() {
               ) : (
                 filteredLogs.map((log) => {
                   // Style configurations to paint logs beautifully
-                  let moduleColor = 'text-sky-350';
+                  let moduleColor = 'text-sky-300';
                   if (log.module === 'HYPERVISOR') moduleColor = 'text-amber-300';
                   if (log.module === 'EBPF') moduleColor = 'text-fuchsia-400';
                   if (log.module === 'VMM') moduleColor = 'text-cyan-400';
-                  if (log.module === 'INTEL-VT') moduleColor = 'text-indigo-350';
-                  if (log.module === 'AMD-V') moduleColor = 'text-violet-350';
+                  if (log.module === 'INTEL-VT') moduleColor = 'text-indigo-300';
+                  if (log.module === 'AMD-V') moduleColor = 'text-violet-300';
 
                   let levelBadge = 'text-zinc-400';
                   if (log.level === 'WARN') levelBadge = 'text-amber-400 font-bold';
                   if (log.level === 'ALERT') levelBadge = 'text-rose-400 font-bold';
-                  if (log.level === 'CRITICAL') levelBadge = 'text-rose-600 font-bold bg-rose-955/20 px-1 border border-rose-900/40 animate-pulse';
+                  if (log.level === 'CRITICAL') levelBadge = 'text-rose-600 font-bold bg-rose-950/20 px-1 border border-rose-900/40 animate-pulse';
 
                   return (
                     <motion.div 
@@ -555,18 +555,18 @@ export default function ConsoleStream() {
                       animate={{ opacity: 1, x: 0 }}
                       className="hover:bg-white/[0.03] transition-all py-0.5 px-1.5 rounded flex flex-wrap gap-x-2 select-text font-mono items-start"
                     >
-                      <span className="text-zinc-650 font-bold shrink-0">[{log.timestamp}]</span>
+                      <span className="text-zinc-400 font-bold shrink-0">[{log.timestamp}]</span>
                       <span className={`${moduleColor} font-bold shrink-0 text-[10px]`}>[{log.module}]</span>
                       <span className={`${levelBadge} shrink-0 text-[9px] uppercase tracking-wide`}>[{log.level}]</span>
                       <span className="text-zinc-300 flex-1 break-all tracking-normal">
                         {log.message}
                         {log.sourceAddress && (
-                          <span className="text-rose-450/80 font-semibold ml-1.5 font-mono select-all text-[10px]">
+                          <span className="text-rose-400/80 font-semibold ml-1.5 font-mono select-all text-[10px]">
                             @ addr:{log.sourceAddress}
                           </span>
                         )}
                         {log.vcpu !== undefined && (
-                          <span className="text-amber-450/85 font-semibold ml-1.5 font-mono text-[10px]">
+                          <span className="text-amber-400/85 font-semibold ml-1.5 font-mono text-[10px]">
                             [VCPU {log.vcpu}]
                           </span>
                         )}
@@ -580,10 +580,10 @@ export default function ConsoleStream() {
         </>
       ) : (
         /* Tauri Packaging Workshop Tab */
-        <div className="bg-[#08080B] p-6 space-y-6 font-mono text-[11px] select-none text-zinc-350 leading-relaxed">
+        <div className="bg-[#08080B] p-6 space-y-6 font-mono text-[11px] select-none text-zinc-300 leading-relaxed">
           <div className="bg-[#101014] border border-white/5 rounded-md p-5 space-y-3">
             <h4 className="text-xs font-serif font-light text-zinc-100 flex items-center gap-1.5 leading-tight select-none">
-              <Boxes size={14} className="text-[#D4AF37]" /> Desktop Wrapper Portfolio Compile Configuration
+              <Boxes size={14} className="text-[#00f0ff]" /> Desktop Wrapper Portfolio Compile Configuration
             </h4>
             <p className="text-[10px] text-zinc-500 leading-normal font-mono select-none">
               Aegis is architected for frictionless distribution to cross-platform desktop shells using Tauri. By wrapping our Vite compiler and configuring structural hardware bindings via Rust hooks, the web application runs inside sandboxed desktop containers.
@@ -599,7 +599,7 @@ export default function ConsoleStream() {
               
               <div className="space-y-3">
                 <div className="flex gap-3">
-                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#D4AF37]/45 flex items-center justify-center text-[#D4AF37] font-bold text-[9px] bg-[#D4AF37]/5 mt-0.5">
+                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#00f0ff]/45 flex items-center justify-center text-[#00f0ff] font-bold text-[9px] bg-[#00f0ff]/5 mt-0.5">
                     1
                   </div>
                   <div>
@@ -607,14 +607,14 @@ export default function ConsoleStream() {
                     <p className="text-[10px] text-zinc-500 leading-snug mt-0.5 font-mono">
                       In your local shell workspace terminal, initiate the client generator:
                     </p>
-                    <div className="mt-1.5 bg-black border border-white/5 rounded px-2.5 py-1.5 font-mono text-[10px] text-[#D4AF37] select-all">
+                    <div className="mt-1.5 bg-black border border-white/5 rounded px-2.5 py-1.5 font-mono text-[10px] text-[#00f0ff] select-all">
                       npm create tauri-app@latest
                     </div>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#D4AF37]/45 flex items-center justify-center text-[#D4AF37] font-bold text-[9px] bg-[#D4AF37]/5 mt-0.5">
+                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#00f0ff]/45 flex items-center justify-center text-[#00f0ff] font-bold text-[9px] bg-[#00f0ff]/5 mt-0.5">
                     2
                   </div>
                   <div>
@@ -626,7 +626,7 @@ export default function ConsoleStream() {
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#D4AF37]/45 flex items-center justify-center text-[#D4AF37] font-bold text-[9px] bg-[#D4AF37]/5 mt-0.5">
+                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#00f0ff]/45 flex items-center justify-center text-[#00f0ff] font-bold text-[9px] bg-[#00f0ff]/5 mt-0.5">
                     3
                   </div>
                   <div>
@@ -635,14 +635,14 @@ export default function ConsoleStream() {
                       Configure `src-tauri/tauri.conf.json` to point your app to:
                     </p>
                     <ul className="list-disc pl-4 text-[9.5px] text-zinc-500 space-y-0.5 mt-1 font-mono">
-                      <li>Dev path: <code className="text-[#D4AF37]">http://localhost:3000</code></li>
-                      <li>Dist output: <code className="text-[#D4AF37]">../dist</code></li>
+                      <li>Dev path: <code className="text-[#00f0ff]">http://localhost:3000</code></li>
+                      <li>Dist output: <code className="text-[#00f0ff]">../dist</code></li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="flex gap-3">
-                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#D4AF37]/45 flex items-center justify-center text-[#D4AF37] font-bold text-[9px] bg-[#D4AF37]/5 mt-0.5">
+                  <div className="shrink-0 w-5 h-5 rounded-full border border-[#00f0ff]/45 flex items-center justify-center text-[#00f0ff] font-bold text-[9px] bg-[#00f0ff]/5 mt-0.5">
                     4
                   </div>
                   <div>
@@ -650,7 +650,7 @@ export default function ConsoleStream() {
                     <p className="text-[10px] text-zinc-500 leading-snug mt-0.5 font-mono">
                       Kickstart cargo compiling to forge the native runtime executables:
                     </p>
-                    <div className="mt-1.5 bg-black border border-white/5 rounded px-2.5 py-1.5 font-mono text-[10px] text-[#D4AF37] select-all">
+                    <div className="mt-1.5 bg-black border border-white/5 rounded px-2.5 py-1.5 font-mono text-[10px] text-[#00f0ff] select-all">
                       npm run tauri build
                     </div>
                   </div>
@@ -666,7 +666,7 @@ export default function ConsoleStream() {
                 </span>
                 <button
                   onClick={() => copyToClipboard(tauriConfCode)}
-                  className="px-2 py-1 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 border border-[#D4AF37]/30 text-[#D4AF37] rounded text-[9px] font-mono transition-all flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 bg-[#00f0ff]/15 hover:bg-[#00f0ff]/25 border border-[#00f0ff]/30 text-[#00f0ff] rounded text-[9px] font-mono transition-all flex items-center gap-1 cursor-pointer"
                 >
                   {copiedConf ? "Copied Conf!" : "Copy json Blueprint"}
                 </button>

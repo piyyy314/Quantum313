@@ -52,19 +52,19 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
       return {
         title: "CRITICAL: Pure Random Payload Block",
         desc: "The overall Shannon entropy exceeds 7.4. This strongly suggests cryptographically secure files, compressed archives, or packed payloads designed to bypass static signature heuristic scanners.",
-        color: "text-rose-400 bg-rose-955/15 border-rose-900/30",
+        color: "text-rose-400 bg-rose-950/15 border-rose-900/30",
       };
     } else if (globalEntropy > 5.5) {
       return {
         title: "WARNING: High Diversity Plaintext / Compiled Modules",
         desc: "Entropy lands in the moderate-to-high zone. Frequently maps to rich binary assemblies (DLLs, executables) or source files combining long structured symbols and raw string tables.",
-        color: "text-[#D4AF37] bg-[#D4AF37]/5 border-[#D4AF37]/15",
+        color: "text-[#00f0ff] bg-[#00f0ff]/5 border-[#00f0ff]/15",
       };
     } else {
       return {
         title: "SAFE: Homogeneous Low-Entropy Format",
         desc: "Low randomness matches human plain text, structural repetitive patterns, padding elements or basic scripts. Unlikely to shield hidden cryptographic key material or raw executable structures.",
-        color: "text-emerald-400 bg-emerald-955/10 border-emerald-900/20",
+        color: "text-emerald-400 bg-emerald-950/10 border-emerald-900/20",
       };
     }
   };
@@ -100,7 +100,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
         >
           <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
             <div className="flex items-center gap-2.5">
-              <Network className="text-[#D4AF37] animate-pulse" size={16} />
+              <Network className="text-[#00f0ff] animate-pulse" size={16} />
               <h3 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-200 uppercase">
                 Sliding Entropy Waveform Map
               </h3>
@@ -108,7 +108,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
             <button
               onClick={handleExportEntropyProfile}
               id="btn-export-entropy-section"
-              className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-mono bg-black/40 text-[#D4AF37] border border-[#D4AF37]/35 hover:bg-[#D4AF37]/10 rounded cursor-pointer transition-colors flex items-center gap-1.5"
+              className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-mono bg-black/40 text-[#00f0ff] border border-[#00f0ff]/35 hover:bg-[#00f0ff]/10 rounded cursor-pointer transition-colors flex items-center gap-1.5"
             >
               <Download size={10} /> Export Profile JSON
             </button>
@@ -117,7 +117,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="border border-white/5 bg-black/40 p-4 rounded">
               <span className="text-[9px] tracking-wider text-white/30 font-mono uppercase block mb-1">Overall Buffer Bytes</span>
-              <span className="text-xl font-serif font-light text-[#D4AF37]">{bytes.length} bytes</span>
+              <span className="text-xl font-serif font-light text-[#00f0ff]">{bytes.length} bytes</span>
             </div>
             <div className="border border-white/5 bg-black/40 p-4 rounded">
               <span className="text-[9px] tracking-wider text-white/30 font-mono uppercase block mb-1">Aggregate Global Entropy</span>
@@ -131,7 +131,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
             </div>
             <div className="border border-white/5 bg-black/40 p-4 rounded">
               <span className="text-[9px] tracking-wider text-white/30 font-mono uppercase block mb-1">Interactive Probe Cursor</span>
-              <span className="text-[11px] font-mono text-[#D4AF37]">
+              <span className="text-[11px] font-mono text-[#00f0ff]">
                 {hoveredOffset !== null 
                   ? `Offset ${hoveredOffset}: ${(entropyResults[hoveredOffset]?.value || 0).toFixed(2)} bits`
                   : 'Hover waveform'}
@@ -194,7 +194,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
               {entropyResults.length > 1 && (
                 <polygon
                   points={`${paddingX},${chartHeight - paddingY} ${pointsStr} ${chartWidth - paddingX},${chartHeight - paddingY}`}
-                  className="fill-[#D4AF37]/5"
+                  className="fill-[#00f0ff]/5"
                 />
               )}
 
@@ -202,7 +202,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
               {entropyResults.length > 1 && (
                 <polyline
                   fill="none"
-                  className="stroke-[#D4AF37]"
+                  className="stroke-[#00f0ff]"
                   strokeWidth={1.5}
                   points={pointsStr}
                 />
@@ -222,10 +222,10 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
                     r={hoveredOffset === i ? 4.5 : 2.5}
                     className={`cursor-pointer transition-all ${
                       hoveredOffset === i 
-                        ? 'fill-[#D4AF37] stroke-white stroke-2' 
+                        ? 'fill-[#00f0ff] stroke-white stroke-2' 
                         : res.value > 7.1 
                           ? 'fill-rose-500' 
-                          : 'fill-[#D4AF37]/65'
+                          : 'fill-[#00f0ff]/65'
                     }`}
                     onMouseEnter={() => setHoveredOffset(i)}
                   />
@@ -255,11 +255,11 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
                 let bgHex = 'bg-black/20 border-white/5';
                 let textHex = 'text-white/40';
                 if (resVal > 7.1) {
-                  bgHex = 'bg-rose-955/20 border-rose-900/30';
+                  bgHex = 'bg-rose-950/20 border-rose-900/30';
                   textHex = 'text-rose-400 font-bold';
                 } else if (resVal > 5.4) {
-                  bgHex = 'bg-[#D4AF37]/5 border-[#D4AF37]/15';
-                  textHex = 'text-[#D4AF37]';
+                  bgHex = 'bg-[#00f0ff]/5 border-[#00f0ff]/15';
+                  textHex = 'text-[#00f0ff]';
                 }
 
                 const hexVal = Number(byte).toString(16).padStart(2, '0').toUpperCase();
@@ -268,7 +268,7 @@ export default function EntropyVisualizer({ onMetricsComputed, triggerToast }: E
                   <div
                     key={idx}
                     title={`Offset: ${idx} | Byte value: 0x${hexVal} (dec: ${byte}) | Window Entropy: ${resVal.toFixed(2)}`}
-                    className={`p-1.5 border text-center rounded transition-all select-none hover:scale-105 hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/30 ${bgHex} ${textHex}`}
+                    className={`p-1.5 border text-center rounded transition-all select-none hover:scale-105 hover:bg-[#00f0ff]/10 hover:border-[#00f0ff]/30 ${bgHex} ${textHex}`}
                   >
                     {hexVal}
                   </div>

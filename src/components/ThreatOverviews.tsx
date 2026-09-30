@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'motion/react';
 import { 
-  ResponsiveContainer, 
   AreaChart, 
   Area, 
   XAxis, 
@@ -38,6 +37,29 @@ interface ThreatOverviewsProps {
   triggerToast?: (msg: string) => void;
 }
 
+function useContainerSize() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (!entries || entries.length === 0) return;
+      const { width, height } = entries[0].contentRect;
+      setSize({ width, height });
+    });
+
+    resizeObserver.observe(element);
+    return () => {
+      resizeObserver.unobserve(element);
+    };
+  }, []);
+
+  return [ref, size] as const;
+}
+
 export default function ThreatOverviews({
   ebpfAlerts = [],
   astFindings = [],
@@ -46,6 +68,18 @@ export default function ThreatOverviews({
 }: ThreatOverviewsProps) {
   const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
   const [timeFilter, setTimeFilter] = useState<'24h' | '7d' | '30d'>('7d');
+  const [renderChartsReady, setRenderChartsReady] = useState(false);
+
+  const [areaRef, areaSize] = useContainerSize();
+  const [barRef, barSize] = useContainerSize();
+  const [pieRef, pieSize] = useContainerSize();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRenderChartsReady(true);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Load local archived threats to compile global metrics
   const archivedStats = useMemo(() => {
@@ -183,7 +217,7 @@ export default function ThreatOverviews({
   };
 
   const threatModuleBarData = [
-    { name: 'eBPF Intercepts', Count: counts.ebpf, color: '#D4AF37' },
+    { name: 'eBPF Intercepts', Count: counts.ebpf, color: '#00f0ff' },
     { name: 'AST Code Analysis', Count: counts.ast, color: '#EC4899' },
     { name: 'Signature Detections', Count: counts.signature, color: '#3B82F6' }
   ];
@@ -195,7 +229,7 @@ export default function ThreatOverviews({
       {/* Header and status belt */}
       <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-serif font-light tracking-widest text-[#D4AF37] uppercase flex items-center gap-2">
+          <h2 className="text-sm font-serif font-light tracking-widest text-[#00f0ff] uppercase flex items-center gap-2">
             <TrendingUp size={16} /> Hypervisor Threat Intelligence Overview
           </h2>
           <p className="text-[11px] font-mono text-white/40 mt-1">
@@ -210,7 +244,7 @@ export default function ThreatOverviews({
                 onClick={() => setTimeFilter(filter)}
                 className={`px-2 py-1 rounded transition-all font-mono font-bold cursor-pointer ${
                   timeFilter === filter
-                    ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20'
+                    ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/20'
                     : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
@@ -220,7 +254,7 @@ export default function ThreatOverviews({
           </div>
           <button
             onClick={handleReloadMetrics}
-            className="p-1.5 bg-black/40 text-white/50 border border-white/5 hover:border-[#D4AF37]/45 hover:text-[#D4AF37] rounded cursor-pointer transition-colors"
+            className="p-1.5 bg-black/40 text-white/50 border border-white/5 hover:border-[#00f0ff]/45 hover:text-[#00f0ff] rounded cursor-pointer transition-colors"
             title="Refresh database logs cache"
           >
             <RefreshCw size={12} />
@@ -232,7 +266,7 @@ export default function ThreatOverviews({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1 */}
         <div className="bg-[#0A0A0C]/30 border border-white/5 rounded p-4 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-3 opacity-10 text-[#D4AF37] group-hover:opacity-20 transition-all">
+          <div className="absolute top-0 right-0 p-3 opacity-10 text-[#00f0ff] group-hover:opacity-20 transition-all">
             <Flame size={44} />
           </div>
           <span className="text-[10px] uppercase font-mono tracking-wider text-white/40 block">Total Active Alerts</span>
@@ -293,7 +327,7 @@ export default function ThreatOverviews({
       <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5 space-y-4">
         <div>
           <h3 className="text-xs font-serif font-light tracking-[0.12em] text-zinc-300 uppercase flex items-center gap-1.5">
-            <Activity size={12} className="text-[#D4AF37]" /> Threat count progression timeline ({timeFilter.toUpperCase()})
+            <Activity size={12} className="text-[#00f0ff]" /> Threat count progression timeline ({timeFilter.toUpperCase()})
           </h3>
           <p className="text-[10px] font-mono text-white/30">
             Temporal distribution profile of security anomalies across static code rules and live kernel execution layers.
@@ -301,16 +335,18 @@ export default function ThreatOverviews({
         </div>
 
         {/* Recharts Area Timeline */}
-        <div className="h-72 w-full pt-4">
-          <ResponsiveContainer width="100%" height="100%">
+        <div ref={areaRef} className="relative h-72 w-full pt-4 min-w-0" style={{ minHeight: '280px' }}>
+          {renderChartsReady && areaSize.width > 0 && areaSize.height > 0 ? (
             <AreaChart
+              width={areaSize.width}
+              height={areaSize.height}
               data={timelineData}
               margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
             >
               <defs>
                 <linearGradient id="colorEbpf" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.25}/>
-                  <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.0}/>
+                  <stop offset="5%" stopColor="#00f0ff" stopOpacity={0.25}/>
+                  <stop offset="95%" stopColor="#00f0ff" stopOpacity={0.0}/>
                 </linearGradient>
                 <linearGradient id="colorAst" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#EC4899" stopOpacity={0.25}/>
@@ -336,13 +372,13 @@ export default function ThreatOverviews({
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: '#0a0a0c', 
-                  border: '1px solid rgba(212,175,55,0.25)', 
+                  border: '1px solid rgba(0,240,255,0.25)', 
                   borderRadius: '4px',
                   fontFamily: 'monospace',
                   fontSize: '11px',
                   color: '#fff'
                 }}
-                labelStyle={{ color: '#D4AF37', fontWeight: 'bold', fontFamily: 'serif' }}
+                labelStyle={{ color: '#00f0ff', fontWeight: 'bold', fontFamily: 'serif' }}
               />
               <Legend 
                 wrapperStyle={{ 
@@ -354,7 +390,7 @@ export default function ThreatOverviews({
               <Area 
                 type="monotone" 
                 dataKey="eBPF" 
-                stroke="#D4AF37" 
+                stroke="#00f0ff" 
                 strokeWidth={1.5}
                 fillOpacity={1} 
                 fill="url(#colorEbpf)" 
@@ -379,7 +415,11 @@ export default function ThreatOverviews({
                 name="Signature Scanner"
               />
             </AreaChart>
-          </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xs font-mono text-white/25 animate-pulse bg-black/25 rounded border border-white/5">
+              Calibrating core timeline telemetry maps...
+            </div>
+          )}
         </div>
       </div>
 
@@ -390,16 +430,18 @@ export default function ThreatOverviews({
         <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5 space-y-4">
           <div>
             <h3 className="text-xs font-serif font-light tracking-[0.12em] text-zinc-300 uppercase flex items-center gap-1.5">
-              <Database size={12} className="text-[#D4AF37]" /> Incidents Distribution by module
+              <Database size={12} className="text-[#00f0ff]" /> Incidents Distribution by module
             </h3>
             <p className="text-[10px] font-mono text-white/30">
               Aggregated counter volume comparing code validation blocks vs active physical runtime threat metrics.
             </p>
           </div>
 
-          <div className="h-60 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
+          <div ref={barRef} className="relative h-60 w-full pt-2 min-w-0" style={{ minHeight: '240px' }}>
+            {renderChartsReady && barSize.width > 0 && barSize.height > 0 ? (
               <BarChart
+                width={barSize.width}
+                height={barSize.height}
                 data={threatModuleBarData}
                 margin={{ top: 10, right: 10, left: -25, bottom: 5 }}
               >
@@ -426,13 +468,17 @@ export default function ThreatOverviews({
                     color: '#fff'
                   }}
                 />
-                <Bar dataKey="Count" fill="#D4AF37" radius={[2, 2, 0, 0]}>
+                <Bar dataKey="Count" fill="#00f0ff" radius={[2, 2, 0, 0]}>
                   {threatModuleBarData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs font-mono text-white/25 animate-pulse bg-black/25 rounded border border-white/5">
+                Mapping incident modules...
+              </div>
+            )}
           </div>
         </div>
 
@@ -440,17 +486,17 @@ export default function ThreatOverviews({
         <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5 space-y-4">
           <div>
             <h3 className="text-xs font-serif font-light tracking-[0.12em] text-zinc-300 uppercase flex items-center gap-1.5">
-              <ShieldAlert size={12} className="text-[#D4AF37]" /> Aggregated Severity Classification
+              <ShieldAlert size={12} className="text-[#00f0ff]" /> Aggregated Severity Classification
             </h3>
             <p className="text-[10px] font-mono text-white/30">
               Analysis of threat escalation and priority matrices assigned to current offline security archives.
             </p>
           </div>
 
-          <div className="h-60 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <div className="w-full sm:w-1/2 h-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+          <div className="h-auto sm:h-60 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div ref={pieRef} className="relative w-full sm:w-1/2 h-48 sm:h-full min-w-0" style={{ minHeight: '180px' }}>
+              {renderChartsReady && pieSize.width > 0 && pieSize.height > 0 ? (
+                <PieChart width={pieSize.width} height={pieSize.height}>
                   <Pie
                     data={severityPieData}
                     cx="50%"
@@ -475,7 +521,11 @@ export default function ThreatOverviews({
                     }}
                   />
                 </PieChart>
-              </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs font-mono text-white/25 animate-pulse bg-black/25 rounded border border-white/5">
+                  Calculating severity metrics...
+                </div>
+              )}
             </div>
             
             {/* Pie Legends */}

@@ -1,4 +1,4 @@
-export type ActiveTool = 'entropy' | 'ast' | 'ebpf' | 'pe' | 'signature' | 'crypto' | 'sandbox' | 'waf' | 'wireless' | 'console' | 'archive' | 'overviews' | 'ai-coprocessor';
+export type ActiveTool = 'operational-dashboard' | 'vuln-scanner' | 'penetration-framework' | 'network-analysis' | 'z3-symbolic' | 'hardware-tee' | 'entropy' | 'ast' | 'ebpf' | 'pe' | 'signature' | 'crypto' | 'sandbox' | 'waf' | 'wireless' | 'console' | 'archive' | 'overviews' | 'ai-coprocessor' | 'yara' | 'decryption-validator';
 
 export interface SysCallAlert {
   id: string;
@@ -58,3 +58,73 @@ export interface PeFileMetadata {
   sections: PeSection[];
   imports: string[];
 }
+
+// Z3 SMT Symbolic Execution Interfaces
+export interface SymbolicVariable {
+  name: string;
+  type: 'Int' | 'BitVec32' | 'BitVec64' | 'Bool' | 'String';
+  initialConstraint?: string;
+  symbolicValue: string;
+}
+
+export interface SymbolicPath {
+  id: string;
+  name: string;
+  status: 'SAT' | 'UNSAT' | 'UNKNOWN';
+  pathCondition: string[];
+  smtScript: string;
+  reachability: boolean;
+  vulnerability?: {
+    type: 'Buffer Overflow' | 'Integer Underflow' | 'Unchecked Auth Bypass' | 'Division by Zero' | 'Use-After-Free' | 'Format String';
+    severity: 'Critical' | 'High' | 'Medium';
+    cveRef?: string;
+    description: string;
+    exploitModel?: Record<string, string | number | boolean>;
+    counterExampleInput?: string;
+  };
+  symbolicState: Record<string, string>;
+}
+
+// Hardware TEE (Intel SGX / AMD SEV) Interfaces
+export type TeePlatform = 'Intel SGX' | 'AMD SEV-SNP' | 'ARM TrustZone / Realm';
+
+export interface EnclaveMeasurement {
+  mrEnclave: string; // Hash of enclave memory pages at initialization
+  mrSigner: string;  // Hash of ISV key that signed enclave
+  isvProdId: number;
+  isvSvn: number;
+  attributes: {
+    debugMode: boolean;
+    mode64bit: boolean;
+    kssEnabled: boolean;
+    memorySizeMb: number;
+  };
+}
+
+export interface SealedKeyVaultItem {
+  id: string;
+  label: string;
+  keyType: 'AES-256-GCM' | 'Ed25519-Private' | 'HMAC-SHA256' | 'RSA-4096-Private' | '313-BIND-RootKey';
+  sealedData: string; // Ciphertext
+  authTag: string;
+  policy: 'POLICY_MRENCLAVE' | 'POLICY_MRSIGNER';
+  createdAt: string;
+  lastAccessTime?: string;
+  isSealed: boolean;
+}
+
+export interface AttestationQuote {
+  quoteId: string;
+  teeType: TeePlatform;
+  timestamp: string;
+  nonceChallenge: string;
+  reportDataHash: string; // SHA256(challenge || agent_pubkey)
+  measurement: EnclaveMeasurement;
+  qeReport: {
+    qeSvn: number;
+    pckCertChain: string;
+    ecdsaSignature: string;
+  };
+  verificationStatus: 'VERIFIED_VALID' | 'SIGNATURE_INVALID' | 'MEASUREMENT_MISMATCH' | 'TCB_OUT_OF_DATE';
+}
+

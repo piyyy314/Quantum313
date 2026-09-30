@@ -119,7 +119,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
     <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5 w-full">
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <BarChart3 className="text-[#D4AF37]" size={16} />
+          <BarChart3 className="text-[#00f0ff]" size={16} />
           <h2 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-100 uppercase">
             Shannon Entropy Analyzer
           </h2>
@@ -127,13 +127,13 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
         <div className="flex gap-2">
           <button
             onClick={() => setInputMode('text')}
-            className={`text-[10px] tracking-wider uppercase px-2.5 py-1 font-mono rounded cursor-pointer border transition-colors ${inputMode === 'text' ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30' : 'text-white/40 border-transparent hover:text-white/80'}`}
+            className={`text-[10px] tracking-wider uppercase px-2.5 py-1 font-mono rounded cursor-pointer border transition-colors ${inputMode === 'text' ? 'bg-[#00f0ff]/10 text-[#00f0ff] border-[#00f0ff]/30' : 'text-white/40 border-transparent hover:text-white/80'}`}
           >
             ASCII Plain text
           </button>
           <button
             onClick={() => setInputMode('hex')}
-            className={`text-[10px] tracking-wider uppercase px-2.5 py-1 font-mono rounded cursor-pointer border transition-colors ${inputMode === 'hex' ? 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30' : 'text-white/40 border-transparent hover:text-white/80'}`}
+            className={`text-[10px] tracking-wider uppercase px-2.5 py-1 font-mono rounded cursor-pointer border transition-colors ${inputMode === 'hex' ? 'bg-[#00f0ff]/10 text-[#00f0ff] border-[#00f0ff]/30' : 'text-white/40 border-transparent hover:text-white/80'}`}
           >
             Hex stream data
           </button>
@@ -141,7 +141,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
       </div>
 
       {errorStr && (
-        <div className="mb-4 bg-rose-955/20 border border-rose-900/45 rounded p-3 flex items-start gap-2 text-rose-300 text-xs font-mono">
+        <div className="mb-4 bg-rose-950/20 border border-rose-900/45 rounded p-3 flex items-start gap-2 text-rose-300 text-xs font-mono">
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <div>{errorStr}</div>
         </div>
@@ -158,7 +158,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
             setInputText(e.target.value);
             setAnalyzed(false);
           }}
-          className="w-full h-36 bg-black/40 text-zinc-300 font-mono text-xs rounded border border-white/5 p-3 focus:border-[#D4AF37]/50 focus:outline-none resize-none"
+          className="w-full h-36 bg-black/40 text-zinc-300 font-mono text-xs rounded border border-white/5 p-3 focus:border-[#00f0ff]/50 focus:outline-none resize-none"
           placeholder={inputMode === 'hex' ? 'e.g. 4d 5a 90 00 03 00 00 00 or raw 4d5a9000...' : 'Enter plaintext, raw source code, or payload rules...'}
         />
       </div>
@@ -166,7 +166,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-[10px] font-mono tracking-wider font-bold text-white/40 mb-1.5 uppercase">
-            Sliding Window Scan Frame Size: <span className="text-[#D4AF37] font-bold">{windowSize} bytes</span>
+            Sliding Window Scan Frame Size: <span className="text-[#00f0ff] font-bold">{windowSize} bytes</span>
           </label>
           <div className="flex items-center gap-3">
             <input
@@ -179,7 +179,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
                 setWindowSize(parseInt(e.target.value));
                 setAnalyzed(false);
               }}
-              className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
+              className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-[#00f0ff]"
             />
           </div>
           <span className="text-[10px] text-white/30 font-mono block mt-1 tracking-wide leading-relaxed">
@@ -194,19 +194,19 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
           <div className="flex gap-2">
             <button
               onClick={() => handleLoadSample('redundant')}
-              className="flex-1 text-[10px] bg-black/30 hover:bg-black/50 text-white/50 hover:text-[#D4AF37] border border-white/5 px-2.5 py-1.5 font-mono rounded cursor-pointer text-left transition-colors"
+              className="flex-1 text-[10px] bg-black/30 hover:bg-black/50 text-white/50 hover:text-[#00f0ff] border border-white/5 px-2.5 py-1.5 font-mono rounded cursor-pointer text-left transition-colors"
             >
               • Redundant predictable
             </button>
             <button
               onClick={() => handleLoadSample('high_entropy')}
-              className="flex-1 text-[10px] bg-black/30 hover:bg-black/50 text-white/50 hover:text-[#D4AF37] border border-white/5 px-2.5 py-1.5 font-mono rounded cursor-pointer text-left transition-colors"
+              className="flex-1 text-[10px] bg-black/30 hover:bg-black/50 text-white/50 hover:text-[#00f0ff] border border-white/5 px-2.5 py-1.5 font-mono rounded cursor-pointer text-left transition-colors"
             >
               • Crypt signature keys
             </button>
             <button
               onClick={() => handleLoadSample('mixed')}
-              className="flex-1 text-[10px] bg-black/30 hover:bg-black/50 text-white/50 hover:text-[#D4AF37] border border-white/5 px-2.5 py-1.5 font-mono rounded cursor-pointer text-left transition-colors"
+              className="flex-1 text-[10px] bg-black/30 hover:bg-black/50 text-white/50 hover:text-[#00f0ff] border border-white/5 px-2.5 py-1.5 font-mono rounded cursor-pointer text-left transition-colors"
             >
               • Mixed payload bounds
             </button>
@@ -218,7 +218,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
         <button
           onClick={handleAnalyze}
           id="btn-run-entropy-scan"
-          className="text-[10px] uppercase tracking-widest border border-[#D4AF37]/50 text-[#D4AF37] px-4 py-2 hover:bg-[#D4AF37] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(212,175,55,0.1)] cursor-pointer"
+          className="text-[10px] uppercase tracking-widest border border-[#00f0ff]/50 text-[#00f0ff] px-4 py-2 hover:bg-[#00f0ff] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(0,240,255,0.1)] cursor-pointer"
         >
           Compute Shannon Metrics
         </button>
@@ -226,7 +226,7 @@ export default function EntropyCalculator({ onAnalyzeFinished }: EntropyCalculat
 
       <div className="mt-4 bg-black/30 p-4 rounded border border-white/5 font-mono text-[11px] leading-relaxed text-white/40">
         <div className="flex items-center gap-1.5 text-white/70 font-bold mb-1.5 uppercase text-xs">
-          <HelpCircle size={13} className="text-[#D4AF37]" /> Metric Definition
+          <HelpCircle size={13} className="text-[#00f0ff]" /> Metric Definition
         </div>
         Shannon entropy measures raw information randomness in a sliding buffer from <strong className="text-rose-400">0.0 (predictably structured repetition)</strong> to <strong className="text-emerald-400 font-bold">8.0 (highest randomness)</strong>. High-entropy spots are indicators of encrypted code segments, secret credentials, or malware payload packing bypass structures.
       </div>

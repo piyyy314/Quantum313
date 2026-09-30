@@ -109,7 +109,7 @@ export default function SignatureScanner({
     <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5">
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
         <h2 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-100 uppercase flex items-center gap-2">
-          <Terminal className="text-[#D4AF37]" size={15} /> Memory Signature Scanner
+          <Terminal className="text-[#00f0ff]" size={15} /> Memory Signature Scanner
         </h2>
 
         <div className="flex gap-2.5">
@@ -117,14 +117,14 @@ export default function SignatureScanner({
             <button
               onClick={handleExportSignatures}
               id="btn-export-signature-section"
-              className="text-[9px] uppercase tracking-wider font-mono px-2.5 py-1.5 bg-black/40 text-[#D4AF37] border border-[#D4AF37]/35 hover:bg-[#D4AF37]/10 rounded cursor-pointer transition-colors flex items-center gap-1"
+              className="text-[9px] uppercase tracking-wider font-mono px-2.5 py-1.5 bg-black/40 text-[#00f0ff] border border-[#00f0ff]/35 hover:bg-[#00f0ff]/10 rounded cursor-pointer transition-colors flex items-center gap-1"
             >
               <Download size={10} /> Export Violations JSON
             </button>
           )}
           <button
             onClick={handleLoadAttackVector}
-            className="text-[9px] uppercase tracking-wider font-mono px-3 py-1.5 bg-black/40 text-white/50 border border-white/5 hover:border-white/10 hover:text-[#D4AF37] rounded cursor-pointer transition-colors"
+            className="text-[9px] uppercase tracking-wider font-mono px-3 py-1.5 bg-black/40 text-white/50 border border-white/5 hover:border-white/10 hover:text-[#00f0ff] rounded cursor-pointer transition-colors"
           >
             Load Infected Buffer sequence
           </button>
@@ -132,8 +132,8 @@ export default function SignatureScanner({
       </div>
 
       <div className="mb-4 text-[11px] font-mono leading-relaxed text-white/40 bg-black/30 p-4 rounded border border-white/5">
-        <div className="flex items-center gap-1.5 text-[#D4AF37] font-bold uppercase mb-2 text-xs">
-          <AlertTriangle size={12} className="text-[#D4AF37]" /> Pattern matching guidelines
+        <div className="flex items-center gap-1.5 text-[#00f0ff] font-bold uppercase mb-2 text-xs">
+          <AlertTriangle size={12} className="text-[#00f0ff]" /> Pattern matching guidelines
         </div>
         Aho-Corasick Multi-Pattern engine compiles raw system-level indicators (malware packers, hardcoded hex endpoints, shell payloads) into search lookup tries to evaluate target binary segments concurrently in a single pass.
       </div>
@@ -149,7 +149,7 @@ export default function SignatureScanner({
             setHexInput(e.target.value);
             setScanned(false);
           }}
-          className="w-full h-36 bg-black/40 text-zinc-300 font-mono text-xs rounded border border-white/5 p-3 focus:outline-none focus:border-[#D4AF37]/50 resize-none"
+          className="w-full h-36 bg-black/40 text-zinc-300 font-mono text-xs rounded border border-white/5 p-3 focus:outline-none focus:border-[#00f0ff]/50 resize-none"
           placeholder="Paste hex space-delimited streams (e.g. 55 50 58 30)..."
         />
       </div>
@@ -161,7 +161,7 @@ export default function SignatureScanner({
         <button
           onClick={handleScanSignatures}
           id="btn-run-signature-scan"
-          className="text-[10px] uppercase tracking-widest border border-[#D4AF37]/50 text-[#D4AF37] px-4 py-2 hover:bg-[#D4AF37] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(212,175,55,0.1)] cursor-pointer"
+          className="text-[10px] uppercase tracking-widest border border-[#00f0ff]/50 text-[#00f0ff] px-4 py-2 hover:bg-[#00f0ff] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(0,240,255,0.1)] cursor-pointer"
         >
           Run Multi-signature scan
         </button>
@@ -178,7 +178,7 @@ export default function SignatureScanner({
           </h3>
 
           {alerts.length === 0 ? (
-            <div className="bg-emerald-955/10 border border-emerald-900/20 rounded-lg p-4 flex items-start gap-2.5 text-emerald-300 text-xs font-mono">
+            <div className="bg-emerald-950/10 border border-emerald-900/20 rounded-lg p-4 flex items-start gap-2.5 text-emerald-300 text-xs font-mono">
               <CheckCircle size={15} className="mt-0.5 shrink-0" />
               <div>
                 <span className="font-bold uppercase block text-xs tracking-wider mb-0.5 text-emerald-200">✓ Binary Signatures Clean</span>
@@ -192,7 +192,7 @@ export default function SignatureScanner({
                   <ShieldAlert size={15} className="mt-0.5 shrink-0" />
                   <div>
                     <strong className="block font-bold text-rose-400 text-xs uppercase tracking-wide mb-1">{al.patternName}</strong>
-                    Matched sequence <code className="bg-zinc-900/40 border border-white/5 px-1.5 py-0.5 rounded text-[11px] text-zinc-100">{al.matchedBytes}</code> detected at binary offset <strong className="text-[#D4AF37] font-bold font-serif">+{al.offset} bytes</strong> relative to initial segment start.
+                    Matched sequence <code className="bg-zinc-900/40 border border-white/5 px-1.5 py-0.5 rounded text-[11px] text-zinc-100">{al.matchedBytes}</code> detected at binary offset <strong className="text-[#00f0ff] font-bold font-serif">+{al.offset} bytes</strong> relative to initial segment start.
                   </div>
                 </div>
               ))}

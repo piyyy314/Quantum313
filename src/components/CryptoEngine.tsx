@@ -287,17 +287,20 @@ export default function CryptoEngine({
     const bits = keyDiversity.totalBits;
     if (bits === 0) return { label: "EMPTY_BUFFER", level: "critical", color: "text-rose-500 border-rose-500/20 bg-rose-500/5", desc: "No key material specified" };
     
-    if (entropy < 3.2 || bits < 40) {
+    // Total effective bits combines length and character-level entropy to prevent false negatives for high-security keys
+    const effectiveBits = Math.min(bits, Math.round(calcKey.length * entropy));
+
+    if (effectiveBits < 40) {
       return { label: "CRITICAL COLLAPSE VULNERABILITY", level: "critical", color: "text-rose-500 border-rose-500/20 bg-rose-500/5", desc: "Trivial dictionary brute force threat detected. Key exhibits low complexity patterns." };
     }
-    if (entropy < 4.8 || bits < 64) {
+    if (effectiveBits < 80) {
       return { label: "MEDIUM EXPLOIT BOUNDARY", level: "warning", color: "text-amber-500 border-amber-500/20 bg-amber-500/5", desc: "Susceptible to specialized GPU cracking rigs within days. Strongly encourage longer key material or HKDF salt expansion." };
     }
-    if (entropy < 6.0 || bits < 128) {
-      return { label: "ROBUST SECURE POSTURE", level: "secure", color: "text-[#D4AF37] border-[#D4AF37]/20 bg-[#D4AF37]/5", desc: "Highly secure symmetrical entropy profile. Out of reach of present-day supercomputers." };
+    if (effectiveBits < 128) {
+      return { label: "ROBUST SECURE POSTURE", level: "secure", color: "text-[#00f0ff] border-[#00f0ff]/20 bg-[#00f0ff]/5", desc: "Highly secure symmetrical entropy profile. Out of reach of present-day supercomputers." };
     }
     return { label: "QUANTUM AIRGAP CONFIDENTIALITY", level: "military", color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5", desc: "Optimal cryptographic high-entropy configuration. Fully aligned with secure military-grade confidentiality templates." };
-  }, [entropyValue, keyDiversity]);
+  }, [entropyValue, keyDiversity, calcKey]);
 
   // Interactive Bruteforce terminal simulation
   const handleCrackSimulationRun = () => {
@@ -368,7 +371,7 @@ export default function CryptoEngine({
       <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5">
         <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <Key className="text-[#D4AF37] animate-pulse" size={16} />
+            <Key className="text-[#00f0ff] animate-pulse" size={16} />
             <h2 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-100 uppercase">
               Perfect Forward Secrecy Key Exchange (Diffie-Hellman & HKDF)
             </h2>
@@ -379,14 +382,14 @@ export default function CryptoEngine({
               <button
                 onClick={handleExportDhSession}
                 id="btn-export-crypto-section"
-                className="text-[9px] uppercase tracking-wider font-mono px-2.5 py-1.5 bg-black/40 text-[#D4AF37] border border-[#D4AF37]/35 hover:bg-[#D4AF37]/10 rounded cursor-pointer transition-colors flex items-center gap-1"
+                className="text-[9px] uppercase tracking-wider font-mono px-2.5 py-1.5 bg-black/40 text-[#00f0ff] border border-[#00f0ff]/35 hover:bg-[#00f0ff]/10 rounded cursor-pointer transition-colors flex items-center gap-1"
               >
                 <Download size={10} /> Export Exchange JSON
               </button>
             )}
             <button
               onClick={loadSecurePrimes}
-              className="text-[9px] uppercase tracking-wider font-mono px-3 py-1.5 bg-black/40 text-white/50 border border-white/5 hover:border-white/10 hover:text-[#D4AF37] rounded cursor-pointer transition-colors flex items-center gap-1"
+              className="text-[9px] uppercase tracking-wider font-mono px-3 py-1.5 bg-black/40 text-white/50 border border-white/5 hover:border-white/10 hover:text-[#00f0ff] rounded cursor-pointer transition-colors flex items-center gap-1"
             >
               <RefreshCw size={10} /> Load Complex Primes
             </button>
@@ -394,8 +397,8 @@ export default function CryptoEngine({
         </div>
 
         <div className="mb-4 text-[11px] font-mono leading-relaxed text-white/40 bg-black/30 p-4 rounded border border-white/5">
-          <div className="flex items-center gap-1.5 text-[#D4AF37] font-bold uppercase mb-2 text-xs">
-            <Info size={12} className="text-[#D4AF37]" /> Ephemeral Handshake Parameter Definitions
+          <div className="flex items-center gap-1.5 text-[#00f0ff] font-bold uppercase mb-2 text-xs">
+            <Info size={12} className="text-[#00f0ff]" /> Ephemeral Handshake Parameter Definitions
           </div>
           Diffie-Hellman allows two host endpoints to dynamically negotiate secret key material over a monitored public channel. An HKDF (HMAC-based Key Derivation Function) then translates this shared secret into strong cryptographic symmetric keys.
         </div>
@@ -414,7 +417,7 @@ export default function CryptoEngine({
                     type="number"
                     value={primeG}
                     onChange={(e) => setPrimeG(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#D4AF37]/50 text-xs font-mono"
+                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#00f0ff]/50 text-xs font-mono"
                   />
                 </div>
 
@@ -424,7 +427,7 @@ export default function CryptoEngine({
                     type="number"
                     value={baseP}
                     onChange={(e) => setBaseP(e.target.value)}
-                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#D4AF37]/50 text-xs font-mono"
+                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#00f0ff]/50 text-xs font-mono"
                   />
                 </div>
               </div>
@@ -442,7 +445,7 @@ export default function CryptoEngine({
                     type="number"
                     value={alicePrivate}
                     onChange={(e) => setAlicePrivate(parseInt(e.target.value) || 0)}
-                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#D4AF37]/50 text-xs font-mono"
+                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#00f0ff]/50 text-xs font-mono"
                   />
                   <span className="text-[9px] text-white/30 block mt-1">(never shared publicly)</span>
                 </div>
@@ -453,7 +456,7 @@ export default function CryptoEngine({
                     type="number"
                     value={bobPrivate}
                     onChange={(e) => setBobPrivate(parseInt(e.target.value) || 0)}
-                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#D4AF37]/50 text-xs font-mono"
+                    className="w-full bg-[#121214]/60 border border-white/5 rounded p-2 text-zinc-300 focus:outline-none focus:border-[#00f0ff]/50 text-xs font-mono"
                   />
                   <span className="text-[9px] text-white/30 block mt-1">(never shared publicly)</span>
                 </div>
@@ -474,7 +477,7 @@ export default function CryptoEngine({
                   </div>
                 ) : (
                   steps.map((st, i) => (
-                    <div key={i} className={st.startsWith('[✓]') ? 'text-emerald-400 font-bold' : st.startsWith('[+]') ? 'text-[#D4AF37]' : 'text-white/40'}>
+                    <div key={i} className={st.startsWith('[✓]') ? 'text-emerald-400 font-bold' : st.startsWith('[+]') ? 'text-[#00f0ff]' : 'text-white/40'}>
                       {st}
                     </div>
                   ))
@@ -486,7 +489,7 @@ export default function CryptoEngine({
               <button
                 onClick={handleComputeDh}
                 id="btn-dh-handshake"
-                className="text-[10px] uppercase tracking-widest border border-[#D4AF37]/50 text-[#D4AF37] px-4 py-2 hover:bg-[#D4AF37] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(212,175,55,0.1)] cursor-pointer"
+                className="text-[10px] uppercase tracking-widest border border-[#00f0ff]/50 text-[#00f0ff] px-4 py-2 hover:bg-[#00f0ff] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(0,240,255,0.1)] cursor-pointer"
               >
                 Initiate ephem Handshake
               </button>
@@ -498,20 +501,20 @@ export default function CryptoEngine({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-emerald-955/10 border border-emerald-900/20 text-emerald-300 rounded-lg p-4 font-mono text-xs leading-relaxed"
+            className="bg-emerald-950/10 border border-emerald-900/20 text-emerald-300 rounded-lg p-4 font-mono text-xs leading-relaxed"
           >
             <div className="flex items-center gap-1.5 font-bold uppercase mb-1.5 text-xs text-emerald-200">
               <CheckCircle size={15} /> Ephemeral Agreement established perfectly!
             </div>
             Alice and Bob successfully computed identical shared symmetric keys independently, without disclosing their private parameters.
-            <div className="bg-black/40 border border-white/5 p-2.5 text-[11px] text-[#D4AF37] font-bold rounded mt-2.5 truncate font-mono flex items-center justify-between">
+            <div className="bg-black/40 border border-white/5 p-2.5 text-[11px] text-[#00f0ff] font-bold rounded mt-2.5 truncate font-mono flex items-center justify-between">
               <span className="truncate">Derived symmetric key: {derivedKeyAlice}</span>
               <button
                 onClick={() => {
                   setCalcKey(derivedKeyAlice);
                   if (triggerToast) triggerToast("Negotiated key cloned successfully into Cracking Benchmarks.");
                 }}
-                className="ml-2 px-2.5 py-1 bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black border border-[#D4AF37]/35 rounded text-[9px] uppercase cursor-pointer transition-all shrink-0 font-mono font-semibold"
+                className="ml-2 px-2.5 py-1 bg-[#00f0ff]/15 text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black border border-[#00f0ff]/35 rounded text-[9px] uppercase cursor-pointer transition-all shrink-0 font-mono font-semibold"
               >
                 Simulate Entropy Crack
               </button>
@@ -525,12 +528,12 @@ export default function CryptoEngine({
         
         <div className="flex items-center justify-between pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <BarChart3 className="text-[#D4AF37]" size={15} />
+            <BarChart3 className="text-[#00f0ff]" size={15} />
             <h3 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-100 uppercase">
               Cryptographic Strength & Cracking Simulation Benchmarks
             </h3>
           </div>
-          <span className="flex items-center gap-1 text-[9px] font-mono font-bold bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] px-2 py-0.5 rounded uppercase">
+          <span className="flex items-center gap-1 text-[9px] font-mono font-bold bg-[#00f0ff]/10 border border-[#00f0ff]/25 text-[#00f0ff] px-2 py-0.5 rounded uppercase">
             <Sparkles size={9} /> Shannon Entropy Engine
           </span>
         </div>
@@ -550,7 +553,7 @@ export default function CryptoEngine({
                       setCalcKey(derivedKeyAlice);
                       if (triggerToast) triggerToast("Negotiated symmetric key cloned successfully.");
                     }}
-                    className="text-[9px] font-mono text-[#D4AF37] hover:underline cursor-pointer"
+                    className="text-[9px] font-mono text-[#00f0ff] hover:underline cursor-pointer"
                   >
                     Load DH Derived Key
                   </button>
@@ -562,11 +565,11 @@ export default function CryptoEngine({
                   value={calcKey}
                   onChange={(e) => setCalcKey(e.target.value)}
                   placeholder="Insert secret token, key parameter or output hex digits..."
-                  className="flex-grow bg-[#0D0D10]/80 border border-white/5 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-[#D4AF37]/50 text-xs font-mono"
+                  className="flex-grow bg-[#0D0D10]/80 border border-white/5 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-[#00f0ff]/50 text-xs font-mono"
                 />
                 <button
                   onClick={handleGenerateAESKey}
-                  className="px-2.5 py-2 bg-black/40 text-[9px] font-mono uppercase border border-white/10 hover:border-[#D4AF37]/45 hover:text-[#D4AF37] rounded transition-colors shrink-0 cursor-pointer"
+                  className="px-2.5 py-2 bg-black/40 text-[9px] font-mono uppercase border border-white/10 hover:border-[#00f0ff]/45 hover:text-[#00f0ff] rounded transition-colors shrink-0 cursor-pointer"
                   title="Generate safe high entropy 256-bit token"
                 >
                   AES256 Gen
@@ -595,11 +598,11 @@ export default function CryptoEngine({
               <div className="space-y-1.5 pt-1.5">
                 <div className="flex justify-between text-[9px]">
                   <span className="text-white/40 uppercase">Shannon Entropy score</span>
-                  <span className="text-[#D4AF37] font-bold">{entropyValue} / 8.000 (Bits/Char)</span>
+                  <span className="text-[#00f0ff] font-bold">{entropyValue} / 8.000 (Bits/Char)</span>
                 </div>
                 <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
                   <div 
-                    className="bg-[#D4AF37] h-full rounded-full transition-all duration-300"
+                    className="bg-[#00f0ff] h-full rounded-full transition-all duration-300"
                     style={{ width: `${Math.min((entropyValue / 8) * 100, 100)}%` }}
                   />
                 </div>
@@ -672,11 +675,11 @@ export default function CryptoEngine({
             {/* Interactive simulated bruteforce ledger terminal style */}
             <div className="border border-white/5 p-4 rounded bg-[#060608] space-y-3">
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1.5 text-[#D4AF37] font-mono text-[10px] uppercase font-bold">
+                <div className="flex items-center gap-1.5 text-[#00f0ff] font-mono text-[10px] uppercase font-bold">
                   <Terminal size={12} /> Active permuted crack sweep console
                 </div>
                 {crackProgress > 0 && (
-                  <span className="font-mono text-[9px] text-[#D4AF37]">{crackProgress}% permutation exhausted</span>
+                  <span className="font-mono text-[9px] text-[#00f0ff]">{crackProgress}% permutation exhausted</span>
                 )}
               </div>
 

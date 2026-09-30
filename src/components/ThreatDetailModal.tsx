@@ -53,19 +53,19 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
     switch (sev) {
       case 'high':
         return (
-          <span className="px-2.5 py-0.5 rounded text-[9px] bg-rose-955/20 text-rose-400 border border-rose-900/30 font-bold tracking-wider uppercase font-mono flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded text-[9px] bg-rose-950/20 text-rose-400 border border-rose-900/30 font-bold tracking-wider uppercase font-mono flex items-center gap-1">
             <ShieldAlert size={10} className="animate-pulse" /> CRITICAL DEFENSE ALERT
           </span>
         );
       case 'medium':
         return (
-          <span className="px-2.5 py-0.5 rounded text-[9px] bg-amber-955/20 text-amber-300 border border-amber-900/30 font-bold tracking-wider uppercase font-mono flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded text-[9px] bg-amber-950/20 text-amber-300 border border-amber-900/30 font-bold tracking-wider uppercase font-mono flex items-center gap-1">
             <AlertTriangle size={10} /> SUSPICIOUS TELEMETRY
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-0.5 rounded text-[9px] bg-emerald-955/20 text-emerald-400 border border-emerald-900/30 font-bold tracking-wider uppercase font-mono flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded text-[9px] bg-emerald-950/20 text-emerald-400 border border-emerald-900/30 font-bold tracking-wider uppercase font-mono flex items-center gap-1">
             <CheckCircle size={10} /> RECON AUDIT LOG
           </span>
         );
@@ -181,16 +181,16 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
           initial={{ scale: 0.95, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
-          className="relative w-full max-w-3xl bg-[#08080A] border border-white/10 rounded-lg shadow-[0_0_50px_rgba(212,175,55,0.1)] overflow-hidden z-10 font-mono text-[11px]"
+          className="relative w-full max-w-3xl bg-[#08080A] border border-white/10 rounded-lg shadow-[0_0_50px_rgba(0,240,255,0.1)] overflow-hidden z-10 font-mono text-[11px]"
         >
           {/* Diagnostic Scanning Header */}
           <div className="relative border-b border-white/5 p-4 bg-gradient-to-r from-black/80 to-[#0F0F12] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded border ${isEbpf ? 'border-rose-900/30 bg-rose-955/10 text-rose-450' : 'border-[#D4AF37]/35 bg-[#D4AF37]/5 text-[#D4AF37]'}`}>
+              <div className={`p-2 rounded border ${isEbpf ? 'border-rose-900/30 bg-rose-950/10 text-rose-400' : 'border-[#00f0ff]/35 bg-[#00f0ff]/5 text-[#00f0ff]'}`}>
                 {isEbpf ? <Cpu size={16} className="animate-spin-slow" /> : <Code2 size={16} />}
               </div>
               <div className="space-y-0.5">
-                <span className="text-[9px] tracking-widest text-[#D4AF37] uppercase font-bold flex items-center gap-1">
+                <span className="text-[9px] tracking-widest text-[#00f0ff] uppercase font-bold flex items-center gap-1">
                   AEGIS INCIDENT RESPONSE CENTER <Lock size={9} />
                 </span>
                 <h3 className="text-sm font-serif font-light text-zinc-100 flex items-center gap-1.5 leading-tight">
@@ -215,12 +215,12 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
             {/* Context/Summary Section */}
             <div className="bg-[#0D0D11] border border-white/5 p-4 rounded-md space-y-2">
               <div className="text-[9px] font-bold tracking-wider text-white/40 uppercase font-mono flex items-center gap-1">
-                <Terminal size={11} className="text-[#D4AF37]" strokeWidth={2.5} /> Summary Narrative
+                <Terminal size={11} className="text-[#00f0ff]" strokeWidth={2.5} /> Summary Narrative
               </div>
               <p className="text-white/80 text-xs font-mono leading-relaxed">
                 {isEbpf ? `Syscall monitoring captured telemetry for program '${ebpfAlert?.comm}' which was ${ebpfAlert?.status === 'intercepted' ? 'forcibly terminated using custom-injected filter rules' : 'logged inside safety thresholds'}.` : astFinding?.desc}
               </p>
-              <p className="text-[10px] text-[#D4AF37]/80 italic">
+              <p className="text-[10px] text-[#00f0ff]/80 italic">
                 {mitigation.guidance}
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                   <>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Timestamp</span>
-                      <strong className="text-zinc-200 flex items-center gap-1 mt-0.5"><Clock size={10} className="text-[#D4AF37]/75" /> {timestamp}</strong>
+                      <strong className="text-zinc-200 flex items-center gap-1 mt-0.5"><Clock size={10} className="text-[#00f0ff]/75" /> {timestamp}</strong>
                     </div>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Process ID (PID)</span>
@@ -243,7 +243,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                     </div>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Parent PID (PPID)</span>
-                      <strong className="text-[#D4AF37] block mt-0.5">{ebpfAlert.ppid}</strong>
+                      <strong className="text-[#00f0ff] block mt-0.5">{ebpfAlert.ppid}</strong>
                     </div>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Sycall Type</span>
@@ -254,7 +254,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                   <>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Source Sandbox</span>
-                      <strong className="text-zinc-200 flex items-center gap-1 mt-0.5"><FileCode2 size={10} className="text-[#D4AF37]/75" /> static_ast.py</strong>
+                      <strong className="text-zinc-200 flex items-center gap-1 mt-0.5"><FileCode2 size={10} className="text-[#00f0ff]/75" /> static_ast.py</strong>
                     </div>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Line Ref</span>
@@ -262,7 +262,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                     </div>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Detection Rule</span>
-                      <strong className="text-[#D4AF37] block mt-0.5 uppercase">Heuristic AST Tree</strong>
+                      <strong className="text-[#00f0ff] block mt-0.5 uppercase">Heuristic AST Tree</strong>
                     </div>
                     <div className="bg-black/35 border border-white/5 p-2 rounded">
                       <span className="block text-[8px] text-white/30 uppercase">Risk Level</span>
@@ -281,7 +281,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                 </span>
                 <span className="text-[8px] text-white/30 italic">Target source contains un-sanitized vectors</span>
               </div>
-              <div className="relative bg-black border border-white/5 rounded-md p-3 font-mono text-xs text-rose-350 leading-relaxed overflow-x-auto select-all max-h-24">
+              <div className="relative bg-black border border-white/5 rounded-md p-3 font-mono text-xs text-rose-300 leading-relaxed overflow-x-auto select-all max-h-24">
                 <div className="absolute right-2 top-2">
                   <button 
                     onClick={() => handleCopy(isEbpf ? `${ebpfAlert?.comm} ${ebpfAlert?.args}` : astFinding?.codeSnippet || '')}
@@ -294,7 +294,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                 <code>
                   {isEbpf && ebpfAlert ? (
                     <span>
-                      <span className="text-[#D4AF37]">$</span> {ebpfAlert.comm} <span className="text-white/55">{ebpfAlert.args}</span>
+                      <span className="text-[#00f0ff]">$</span> {ebpfAlert.comm} <span className="text-white/55">{ebpfAlert.args}</span>
                     </span>
                   ) : (
                     astFinding?.codeSnippet
@@ -306,7 +306,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
             {/* Comprehensive Mitigation Strategy */}
             <div className="space-y-3.5 pt-2 border-t border-white/5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-emerald-450 uppercase tracking-wider font-bold text-[10px]">
+                <div className="flex items-center gap-1.5 text-emerald-400 uppercase tracking-wider font-bold text-[10px]">
                   <ShieldCheck size={13} className="text-emerald-400" /> Remediation Blueprint & Suggested Fix
                 </div>
                 <button
@@ -352,7 +352,7 @@ export default function ThreatDetailModal({ isOpen, onClose, ebpfAlert, astFindi
                 handleCopy(JSON.stringify(isEbpf ? ebpfAlert : astFinding, null, 2));
                 onClose();
               }}
-              className="px-4 py-1.5 rounded bg-emerald-955/20 border border-emerald-900/40 text-emerald-400 text-[10px] uppercase font-bold tracking-wider hover:bg-emerald-800/40 hover:text-emerald-300 transition-all cursor-pointer font-mono shadow-[0_0_8px_rgba(16,185,129,0.1)]"
+              className="px-4 py-1.5 rounded bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 text-[10px] uppercase font-bold tracking-wider hover:bg-emerald-800/40 hover:text-emerald-300 transition-all cursor-pointer font-mono shadow-[0_0_8px_rgba(16,185,129,0.1)]"
             >
               Export JSON & Close
             </button>

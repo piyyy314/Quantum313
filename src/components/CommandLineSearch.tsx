@@ -263,7 +263,7 @@ export default function CommandLineSearch({
   const getSourceIcon = (category: string) => {
     switch (category) {
       case 'ebpf':
-        return <Cpu size={12} className="text-[#D4AF37]" />;
+        return <Cpu size={12} className="text-[#00f0ff]" />;
       case 'ast':
         return <Code2 size={12} className="text-pink-400" />;
       case 'signature':
@@ -295,7 +295,7 @@ export default function CommandLineSearch({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           
           <div className="flex-1 flex items-center gap-3 bg-black/40 border border-white/5 hover:border-white/10 rounded px-3 py-2 cursor-pointer transition-colors" onClick={() => setIsOpen(true)}>
-            <Terminal size={14} className="text-[#D4AF37]" />
+            <Terminal size={14} className="text-[#00f0ff]" />
             <div className="flex-1 flex items-center justify-between">
               <span className="text-[11px] font-mono text-white/50 flex items-center gap-1">
                 <span>aegis-sh:~$ grep -rI</span>
@@ -324,7 +324,7 @@ export default function CommandLineSearch({
             </button>
             <button
               onClick={() => handleApplyPresetCommand('--category ebpf')}
-              className="px-2 py-1 bg-black/40 text-[9px] font-mono text-[#D4AF37] border border-[#D4AF37]/10 hover:border-[#D4AF37]/45 rounded transition-all cursor-pointer"
+              className="px-2 py-1 bg-black/40 text-[9px] font-mono text-[#00f0ff] border border-[#00f0ff]/10 hover:border-[#00f0ff]/45 rounded transition-all cursor-pointer"
             >
               -c ebpf
             </button>
@@ -359,7 +359,7 @@ export default function CommandLineSearch({
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/5 pb-3 mb-3">
               <div className="flex items-center gap-2">
-                <Search size={12} className="text-[#D4AF37]" />
+                <Search size={12} className="text-[#00f0ff]" />
                 <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">
                   Live Index Results ({filteredResults.length} telemetry matches)
                 </span>
@@ -376,7 +376,7 @@ export default function CommandLineSearch({
                       onClick={() => setCategoryFilter(cat)}
                       className={`px-2 py-0.5 rounded transition-all font-mono capitalize cursor-pointer ${
                         categoryFilter === cat
-                          ? 'bg-[#D4AF37]/15 text-[#D4AF37] font-bold'
+                          ? 'bg-[#00f0ff]/15 text-[#00f0ff] font-bold'
                           : 'text-zinc-500 hover:text-zinc-300'
                       }`}
                     >
@@ -416,7 +416,7 @@ export default function CommandLineSearch({
             {/* Input target for typing inside dropdown */}
             <div className="mb-3">
               <div className="flex items-center gap-2 bg-[#050507] border border-white/5 rounded px-3 py-2.5">
-                <ChevronRight size={14} className="text-[#D4AF37] shrink-0" />
+                <ChevronRight size={14} className="text-[#00f0ff] shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -437,7 +437,7 @@ export default function CommandLineSearch({
                 filteredResults.map((result) => (
                   <div
                     key={result.id}
-                    className="p-3 bg-black/40 border border-white/5 hover:border-[#D4AF37]/35 rounded flex items-start justify-between gap-4 transition-all hover:bg-black/80 font-mono text-[10px]"
+                    className="p-3 bg-black/40 border border-white/5 hover:border-[#00f0ff]/35 rounded flex items-start justify-between gap-4 transition-all hover:bg-black/80 font-mono text-[10px]"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -449,7 +449,7 @@ export default function CommandLineSearch({
                         <span className="text-zinc-200 font-serif font-light">{result.title}</span>
                       </div>
                       
-                      <div className="text-[#D4AF37] text-[9px] font-semibold">
+                      <div className="text-[#00f0ff] text-[9px] font-semibold">
                         {result.subtitle}
                       </div>
 

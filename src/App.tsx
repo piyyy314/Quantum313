@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ActiveTool } from './types';
+import CryptoJS from 'crypto-js';
 import ConsoleHeader from './components/ConsoleHeader';
 import EntropyVisualizer from './components/EntropyVisualizer';
 import AstAnalyzer from './components/AstAnalyzer';
@@ -14,6 +15,17 @@ import ThreatArchive from './components/ThreatArchive';
 import ThreatOverviews from './components/ThreatOverviews';
 import AiCoprocessor from './components/AiCoprocessor';
 import CommandLineSearch from './components/CommandLineSearch';
+import YaraCompiler from './components/YaraCompiler';
+import ErrorBoundary from './components/ErrorBoundary';
+import DecryptionValidator from './components/DecryptionValidator';
+
+// Ground Station & Space Operations Components
+import OperationalDashboard from './components/OperationalDashboard';
+import VulnerabilityScanner from './components/VulnerabilityScanner';
+import PenetrationFramework from './components/PenetrationFramework';
+import NetworkAnalysis from './components/NetworkAnalysis';
+import Z3SymbolicExecutor from './components/Z3SymbolicExecutor';
+import HardwareTeeModule from './components/HardwareTeeModule';
 import { 
   BarChart3, 
   TrendingUp,
@@ -31,11 +43,18 @@ import {
   Archive,
   CheckCircle,
   X,
-  Sparkles
+  Sparkles,
+  FileCode,
+  Radio,
+  Shield,
+  Zap,
+  Network,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTool, setActiveTool] = useState<ActiveTool>('console');
+  const [activeTool, setActiveTool] = useState<ActiveTool>('operational-dashboard');
   const [threatLevel, setThreatLevel] = useState<'low' | 'medium' | 'high'>('low');
   const [alertCount, setAlertCount] = useState<number>(0);
 
@@ -88,8 +107,13 @@ export default function App() {
   const [entropyBytesLength, setEntropyBytesLength] = useState<number>(0);
   const [entropyGlobalScore, setEntropyGlobalScore] = useState<number>(0);
   const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
+  const [encryptForensics, setEncryptForensics] = useState<boolean>(false);
+  const [forensicsPassphrase, setForensicsPassphrase] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewContent, setPreviewContent] = useState<string>('');
+  const [previewFilename, setPreviewFilename] = useState<string>('');
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -180,6 +204,9 @@ export default function App() {
   }, [ebpfAlerts, astFindings]);
 
   const handleExportForensics = () => {
+    let rawContent = "";
+    let baseFilename = `aegis_forensics_dump_${new Date().toISOString().substring(0, 10)}`;
+
     if (exportFormat === 'json') {
       const payload = {
         meta: {
@@ -232,14 +259,7 @@ export default function App() {
         }))
       };
 
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `aegis_forensics_dump_${new Date().toISOString().substring(0, 10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      triggerToast("Unified forensic audit successfully exported as JSON.");
+      rawContent = JSON.stringify(payload, null, 2);
     } else {
       // CSV Format Generating
       const escapeCsvValue = (val: any) => {
@@ -303,19 +323,60 @@ export default function App() {
         csvContent += r.map(escapeCsvValue).join(",") + "\n";
       });
 
-      const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `aegis_forensics_dump_${new Date().toISOString().substring(0, 10)}.csv`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      triggerToast("Unified forensic audit successfully exported as CSV.");
+      rawContent = csvContent;
     }
+
+    if (encryptForensics && forensicsPassphrase.trim() !== "") {
+      const ciphertext = CryptoJS.AES.encrypt(rawContent, forensicsPassphrase.trim()).toString();
+      const encryptedContainer = `-----BEGIN AEGIS SECURE FORENSICS CONTAINER-----\n${ciphertext}\n-----END AEGIS SECURE FORENSICS CONTAINER-----`;
+      setPreviewContent(encryptedContainer);
+      setPreviewFilename(`${baseFilename}.${exportFormat}.enc`);
+    } else {
+      setPreviewContent(rawContent);
+      setPreviewFilename(`${baseFilename}.${exportFormat}`);
+    }
+    setShowPreviewModal(true);
   };
 
   const renderToolContent = () => {
     switch (activeTool) {
+      case 'operational-dashboard':
+        return (
+          <OperationalDashboard 
+            setActiveTool={setActiveTool}
+            triggerToast={triggerToast}
+          />
+        );
+      case 'vuln-scanner':
+        return (
+          <VulnerabilityScanner 
+            triggerToast={triggerToast}
+          />
+        );
+      case 'penetration-framework':
+        return (
+          <PenetrationFramework 
+            triggerToast={triggerToast}
+          />
+        );
+      case 'network-analysis':
+        return (
+          <NetworkAnalysis 
+            triggerToast={triggerToast}
+          />
+        );
+      case 'z3-symbolic':
+        return (
+          <Z3SymbolicExecutor 
+            triggerToast={triggerToast}
+          />
+        );
+      case 'hardware-tee':
+        return (
+          <HardwareTeeModule 
+            triggerToast={triggerToast}
+          />
+        );
       case 'entropy':
         return (
           <EntropyVisualizer 
@@ -397,14 +458,34 @@ export default function App() {
             triggerToast={triggerToast}
           />
         );
+      case 'yara':
+        return (
+          <YaraCompiler 
+            triggerToast={triggerToast}
+          />
+        );
+      case 'decryption-validator':
+        return (
+          <DecryptionValidator 
+            triggerToast={triggerToast}
+          />
+        );
     }
   };
 
   const navItems = [
+    { id: 'operational-dashboard' as const, label: 'Operational Dashboard', icon: Radio, desc: 'Assess Ground-Station RF & Hardening' },
+    { id: 'z3-symbolic' as const, label: 'Z3 SMT Symbolic Solver', icon: Binary, desc: 'Path condition satisfiability & exploit solver' },
+    { id: 'hardware-tee' as const, label: 'Hardware TEE (SGX/SEV)', icon: ShieldCheck, desc: 'Enclave key sealing & remote attestation' },
+    { id: 'vuln-scanner' as const, label: '1. Vulnerability Scanner', icon: Shield, desc: 'CISA KEV Satellite Active Auditor' },
+    { id: 'penetration-framework' as const, label: '2. Penetration Framework', icon: Zap, desc: 'Custom Uplink Payload Injection' },
+    { id: 'network-analysis' as const, label: '9-Element Tactical Suite', icon: Network, desc: 'Network, Pwd, Sandbox, Forensic, Jamming' },
     { id: 'console' as const, label: 'Console Stream', icon: Terminal, desc: 'Live kernel & hypervisor logs' },
     { id: 'overviews' as const, label: 'Threat Overviews', icon: TrendingUp, desc: 'Aggregated analytics charts' },
     { id: 'ai-coprocessor' as const, label: 'AI Threat Coprocessor', icon: Sparkles, desc: 'Heuristics & static forensics' },
     { id: 'archive' as const, label: 'Threat Archive', icon: Archive, desc: 'Durable offline alert vault' },
+    { id: 'yara' as const, label: 'YARA Rule Compiler', icon: FileCode, desc: 'Pattern matching compile engine' },
+    { id: 'decryption-validator' as const, label: 'Forensic Decryptor', icon: Lock, desc: 'Decrypt & validate exported logs' },
     { id: 'entropy' as const, label: 'Entropy Scan', icon: BarChart3, desc: 'Assess randomness profiles' },
     { id: 'ast' as const, label: 'AST Static Vulns', icon: Code2, desc: 'Heuristic script scanner' },
     { id: 'ebpf' as const, label: 'eBPF Live Audit', icon: Cpu, desc: 'Simulate kernel operations' },
@@ -414,7 +495,7 @@ export default function App() {
   ];
 
   return (
-    <div id="aegis-app-container" className="min-h-screen bg-[#080809] text-[#E0E0E0] flex flex-col font-sans select-none antialiased">
+    <div id="aegis-app-container" className="min-h-screen bg-transparent text-[#E2E8F0] flex flex-col font-sans select-none antialiased">
       <ConsoleHeader 
         threatLevel={threatLevel} 
         setThreatLevel={setThreatLevel} 
@@ -431,8 +512,8 @@ export default function App() {
       <div className="flex-1 max-w-[1400px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Navigation panel */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="bg-[#0A0A0C]/60 border border-white/5 rounded p-5">
-            <h2 className="text-[10px] text-[#D4AF37]/80 font-serif italic uppercase tracking-[0.2em] mb-4">
+          <div className="bg-slate-950/40 backdrop-blur-md border border-white/5 rounded p-5 shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
+            <h2 className="text-[10px] text-[#00f0ff]/80 font-serif italic uppercase tracking-[0.2em] mb-4">
               Intelligence Modules
             </h2>
             
@@ -447,11 +528,11 @@ export default function App() {
                     onClick={() => setActiveTool(item.id)}
                     className={`w-full text-left p-3.5 rounded border transition-all text-xs flex items-start gap-3.5 cursor-pointer ${
                       isSelected
-                        ? 'bg-black/40 text-white border-[#D4AF37]/40 shadow-[0_0_15px_rgba(212,175,55,0.06)] border-l-2 border-l-[#D4AF37]'
+                        ? 'bg-cyan-500/10 text-white border-[#00f0ff]/40 shadow-[0_0_15px_rgba(0,240,255,0.08)] border-l-2 border-l-[#00f0ff]'
                         : 'bg-transparent text-white/40 border-transparent hover:border-white/5 hover:bg-white/[0.01] hover:text-white/80'
                     }`}
                   >
-                    <Icon size={15} className={`shrink-0 mt-0.5 ${isSelected ? 'text-[#D4AF37]' : 'text-white/30'}`} />
+                    <Icon size={15} className={`shrink-0 mt-0.5 ${isSelected ? 'text-[#00f0ff]' : 'text-white/30'}`} />
                     <div className="flex flex-col">
                       <span className={`tracking-wider ${isSelected ? 'font-light text-white font-serif' : 'font-mono text-white/50'}`}>
                         {item.label}
@@ -467,9 +548,9 @@ export default function App() {
           </div>
 
           {/* Quick-stats system banner block */}
-          <div className="bg-[#0A0A0C]/60 border border-white/5 rounded p-5 font-mono text-[11px] leading-relaxed text-white/50">
+          <div className="bg-slate-950/40 backdrop-blur-md border border-white/5 rounded p-5 font-mono text-[11px] leading-relaxed text-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
             <div className="flex items-center gap-1.5 text-white/80 font-serif italic mb-2 uppercase text-xs">
-              <ShieldAlert size={13} className="text-[#D4AF37]" /> Core Threat Status
+              <ShieldAlert size={13} className="text-[#00f0ff]" /> Core Threat Status
             </div>
             {threatLevel === 'high' ? (
               <p className="text-rose-300/90">
@@ -477,7 +558,7 @@ export default function App() {
               </p>
             ) : threatLevel === 'medium' ? (
               <p className="text-amber-200/90 font-mono">
-                ⚠️ <strong className="font-serif italic text-[#D4AF37]">ELEVATED AUDITING</strong>. Background AST static validation processing active. Multi-signature scanner buffers checked.
+                ⚠️ <strong className="font-serif italic text-[#00f0ff]">ELEVATED AUDITING</strong>. Background AST static validation processing active. Multi-signature scanner buffers checked.
               </p>
             ) : (
               <p className="text-emerald-400/90 font-mono">
@@ -487,9 +568,9 @@ export default function App() {
           </div>
 
           {/* Foresnics Export Area */}
-          <div className="bg-[#0A0A0C]/60 border border-white/5 rounded p-5 font-mono text-[11px] leading-relaxed text-white/50 space-y-3.5">
+          <div className="bg-slate-950/40 backdrop-blur-md border border-white/5 rounded p-5 font-mono text-[11px] leading-relaxed text-white/50 space-y-3.5 shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
             <div className="flex items-center gap-1.5 text-white/80 font-serif italic uppercase text-xs">
-              <FileJson size={13} className="text-[#D4AF37]" /> Forensic Data Exporter
+              <FileJson size={13} className="text-[#00f0ff]" /> Forensic Data Exporter
             </div>
             <p className="text-[10px] text-white/40 leading-relaxed font-mono">
               Compile current active kernel syscall execution history, heuristic static AST vulnerability metrics, and matching malware signatures into a unified offline forensic audit document.
@@ -506,7 +587,7 @@ export default function App() {
               </div>
               <div className="flex justify-between">
                 <span className="text-white/30 font-mono">CODE SIGNATURES:</span>
-                <span className="text-zinc-350 font-bold">{signatureAlerts.length} hits</span>
+                <span className="text-zinc-300 font-bold">{signatureAlerts.length} hits</span>
               </div>
             </div>
 
@@ -519,7 +600,7 @@ export default function App() {
                   onClick={() => setExportFormat('json')}
                   className={`px-2.5 py-1 rounded transition-all font-mono font-bold cursor-pointer ${
                     exportFormat === 'json'
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20 font-bold text-[9px]'
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/20 font-bold text-[9px]'
                       : 'text-zinc-500 hover:text-zinc-300 bg-transparent border border-transparent'
                   }`}
                 >
@@ -530,7 +611,7 @@ export default function App() {
                   onClick={() => setExportFormat('csv')}
                   className={`px-2.5 py-1 rounded transition-all font-mono font-bold cursor-pointer ${
                     exportFormat === 'csv'
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/20 font-bold text-[9px]'
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border border-[#00f0ff]/20 font-bold text-[9px]'
                       : 'text-zinc-500 hover:text-zinc-300 bg-transparent border border-transparent'
                   }`}
                 >
@@ -539,10 +620,43 @@ export default function App() {
               </div>
             </div>
 
+            {/* Passphrase encryption options */}
+            <div className="border-t border-white/5 pt-3.5 space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer text-[10px] text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={encryptForensics}
+                  onChange={(e) => setEncryptForensics(e.target.checked)}
+                  className="rounded bg-black border-white/15 text-[#00f0ff] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                />
+                <span className="font-mono uppercase tracking-wider">Encrypt Export Bundle</span>
+              </label>
+
+              <AnimatePresence>
+                {encryptForensics && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden space-y-1.5"
+                  >
+                    <span className="text-[9px] text-white/30 font-mono uppercase tracking-wider block">Passphrase:</span>
+                    <input
+                      type="password"
+                      value={forensicsPassphrase}
+                      onChange={(e) => setForensicsPassphrase(e.target.value)}
+                      placeholder="Passphrase (AES-256)"
+                      className="w-full bg-black/40 border border-white/5 rounded px-2.5 py-1.5 text-[10px] text-zinc-300 font-mono focus:border-[#00f0ff]/30 focus:outline-none"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button
               onClick={handleExportForensics}
               id="btn-export-forensics"
-              className="w-full py-2 bg-transparent text-[#D4AF37] hover:text-black hover:bg-[#D4AF37] border border-[#D4AF37]/55 rounded font-mono text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_8px_rgba(212,175,55,0.06)]"
+              className="w-full py-2 bg-transparent text-[#00f0ff] hover:text-black hover:bg-[#00f0ff] border border-[#00f0ff]/55 rounded font-mono text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.06)]"
             >
               <Download size={12} /> Export Forensics {exportFormat.toUpperCase()}
             </button>
@@ -552,7 +666,9 @@ export default function App() {
         {/* Dynamic Tool Playground area */}
         <div className="lg:col-span-3 space-y-6">
           <main className="min-w-0">
-            {renderToolContent()}
+            <ErrorBoundary>
+              {renderToolContent()}
+            </ErrorBoundary>
           </main>
         </div>
       </div>
@@ -564,6 +680,98 @@ export default function App() {
         astFinding={selectedAstFinding}
       />
 
+      {/* Forensic Export Preview Modal */}
+      <AnimatePresence>
+        {showPreviewModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="bg-[#0E0E12] border border-[#00f0ff]/30 rounded-lg max-w-3xl w-full max-h-[85vh] flex flex-col shadow-[0_0_30px_rgba(0,240,255,0.15)] text-zinc-100 font-mono text-[11px]"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-[#0A0A0D]">
+                <div className="flex items-center gap-2">
+                  <FileJson className="text-[#00f0ff]" size={14} />
+                  <div>
+                    <h3 className="font-serif italic font-bold text-xs tracking-wider uppercase text-[#00f0ff]">
+                      Forensics Report Export Preview
+                    </h3>
+                    <p className="text-[9px] text-white/30 font-mono mt-0.5">
+                      Verify compiled security telemetry dataset before local system download
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="text-zinc-500 hover:text-white hover:bg-white/5 p-1 rounded-md transition-all cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Info strip */}
+              <div className="px-5 py-2.5 bg-cyan-500/5 border-b border-cyan-500/10 text-[10px] text-[#00f0ff]/80 flex items-center gap-2 flex-wrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
+                <span>Filename target: <strong className="text-zinc-300 font-normal">{previewFilename}</strong></span>
+                <span className="text-white/20 hidden sm:inline">|</span>
+                <span>Type: <strong className="text-zinc-300 uppercase font-normal">{previewFilename.endsWith('.json') ? 'JSON Object' : 'CSV Spreadsheet'}</strong></span>
+                <span className="text-white/20 hidden sm:inline">|</span>
+                <span>Size: <strong className="text-zinc-300 font-normal">{(previewContent.length / 1024).toFixed(2)} KB</strong></span>
+              </div>
+
+              {/* Preview Body */}
+              <div className="p-5 flex-1 overflow-hidden flex flex-col gap-2">
+                <div className="text-[10px] text-white/40 mb-1 flex justify-between items-center">
+                  <span>UNIFIED DATA STREAM:</span>
+                  <span className="text-[9px] text-zinc-500">Scroll to inspect entire log</span>
+                </div>
+                <div className="flex-1 bg-black/60 border border-white/5 rounded p-4 overflow-auto font-mono text-[10.5px] leading-relaxed text-zinc-300 max-h-[45vh] select-all">
+                  <pre className="whitespace-pre-wrap break-all select-all font-mono">
+                     {previewContent}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="px-5 py-4 border-t border-white/5 bg-[#0A0A0D] flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="px-4 py-1.5 border border-white/10 hover:border-white/20 hover:bg-white/5 rounded text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer font-mono text-[10px] uppercase font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const type = previewFilename.endsWith('.json') ? 'application/json;charset=utf-8;' : 'text/csv;charset=utf-8;';
+                    const blob = new Blob([previewContent], { type });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", previewFilename);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    setShowPreviewModal(false);
+                    triggerToast(`Unified forensic audit successfully exported as ${previewFilename.endsWith('.json') ? 'JSON' : 'CSV'}.`);
+                  }}
+                  className="px-4 py-1.5 bg-[#00f0ff] hover:bg-[#00d0e0] text-black font-mono text-[10px] font-bold uppercase rounded flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.2)]"
+                >
+                  <Download size={11} /> Confirm & Download
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Modern success toast notification */}
       <AnimatePresence>
         {showToast && (
@@ -571,13 +779,13 @@ export default function App() {
             initial={{ opacity: 0, y: -24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            className="fixed top-6 right-6 z-50 bg-[#0E0E12] border border-[#D4AF37]/50 text-zinc-100 px-4 py-3 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.85)] flex items-center gap-3 font-mono text-[11px] select-none max-w-sm border-l-4 border-l-[#D4AF37]"
+            className="fixed top-6 right-6 z-50 bg-[#0E0E12] border border-[#00f0ff]/50 text-zinc-100 px-4 py-3 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.85)] flex items-center gap-3 font-mono text-[11px] select-none max-w-sm border-l-4 border-l-[#00f0ff]"
           >
-            <div className="p-1.5 bg-[#D4AF37]/10 rounded text-[#D4AF37]">
+            <div className="p-1.5 bg-[#00f0ff]/10 rounded text-[#00f0ff]">
               <CheckCircle size={14} />
             </div>
             <div className="flex-1">
-              <div className="font-bold text-[9px] tracking-widest text-[#D4AF37] uppercase font-serif italic">Forensic Alert Channel</div>
+              <div className="font-bold text-[9px] tracking-widest text-[#00f0ff] uppercase font-serif italic">Forensic Alert Channel</div>
               <div className="text-[10px] text-zinc-300 mt-0.5 leading-relaxed">{toastMessage}</div>
             </div>
             <button 

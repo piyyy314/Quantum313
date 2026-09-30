@@ -94,15 +94,51 @@ const SEED_THREATS: ArchivedThreat[] = [
   }
 ];
 
+const CATEGORY_OPTIONS = [
+  { id: 'ebpf', label: 'eBPF Telemetry' },
+  { id: 'ast', label: 'AST Static Scan' }
+];
+
+const SEVERITY_OPTIONS = [
+  { id: 'high', label: 'Critical' },
+  { id: 'medium', label: 'Medium' },
+  { id: 'low', label: 'Low' }
+];
+
 export default function ThreatArchive() {
   const [threats, setThreats] = useState<ArchivedThreat[]>([]);
   const [selectedThreatId, setSelectedThreatId] = useState<string | null>(null);
   
   // Filtering and Searching parameters
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-  const [severityFilter, setSeverityFilter] = useState<string>('ALL');
+  const [categoryFilters, setCategoryFilters] = useState<string[]>(['ebpf', 'ast']);
+  const [severityFilters, setSeverityFilters] = useState<string[]>(['low', 'medium', 'high']);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+
+  // Multi-select dropdown open states
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isSeverityDropdownOpen, setIsSeverityDropdownOpen] = useState(false);
+
+  // Label helpers for multi-select selectors
+  const categoryLabel = useMemo(() => {
+    if (categoryFilters.length === CATEGORY_OPTIONS.length) {
+      return "All Sources";
+    }
+    if (categoryFilters.length === 0) {
+      return "None Selected";
+    }
+    return categoryFilters.map(c => CATEGORY_OPTIONS.find(opt => opt.id === c)?.label).join(', ');
+  }, [categoryFilters]);
+
+  const severityLabel = useMemo(() => {
+    if (severityFilters.length === SEVERITY_OPTIONS.length) {
+      return "All Severities";
+    }
+    if (severityFilters.length === 0) {
+      return "None Selected";
+    }
+    return severityFilters.map(s => SEVERITY_OPTIONS.find(opt => opt.id === s)?.label).join(', ');
+  }, [severityFilters]);
 
   // Input states for registering a new manual mock incident entry
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -260,35 +296,35 @@ export default function ThreatArchive() {
         t.rawPayload.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.notes && t.notes.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesCategory = categoryFilter === 'ALL' || t.category === categoryFilter;
-      const matchesSeverity = severityFilter === 'ALL' || t.severity === severityFilter;
+      const matchesCategory = categoryFilters.includes(t.category);
+      const matchesSeverity = severityFilters.includes(t.severity);
       const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
 
       return matchesSearch && matchesCategory && matchesSeverity && matchesStatus;
     });
-  }, [threats, searchQuery, categoryFilter, severityFilter, statusFilter]);
+  }, [threats, searchQuery, categoryFilters, severityFilters, statusFilter]);
 
   const getSeverityLabel = (sev: string) => {
     switch (sev) {
       case 'high':
-        return <span className="text-rose-400 font-bold tracking-wide text-[8.5px] bg-rose-955/20 px-1.5 py-0.5 border border-rose-900/30 rounded uppercase">CRITICAL</span>;
+        return <span className="text-rose-400 font-bold tracking-wide text-[8.5px] bg-rose-950/20 px-1.5 py-0.5 border border-rose-900/30 rounded uppercase">CRITICAL</span>;
       case 'medium':
         return <span className="text-amber-300 font-bold tracking-wide text-[8.5px] bg-amber-955/20 px-1.5 py-0.5 border border-amber-900/30 rounded uppercase">MEDIUM</span>;
       default:
-        return <span className="text-blue-400 font-bold tracking-wide text-[8.5px] bg-blue-955/20 px-1.5 py-0.5 border border-blue-900/30 rounded uppercase">LOW</span>;
+        return <span className="text-blue-400 font-bold tracking-wide text-[8.5px] bg-blue-950/20 px-1.5 py-0.5 border border-blue-900/30 rounded uppercase">LOW</span>;
     }
   };
 
   const getStatusLabel = (st: ArchivedThreat['status']) => {
     switch (st) {
       case 'Unresolved':
-        return <span className="text-red-400 bg-red-955/15 px-2 py-0.5 rounded border border-red-900/40 text-[9px] uppercase font-bold tracking-wider">UNRESOLVED</span>;
+        return <span className="text-red-400 bg-red-950/15 px-2 py-0.5 rounded border border-red-900/40 text-[9px] uppercase font-bold tracking-wider">UNRESOLVED</span>;
       case 'Triaged':
-        return <span className="text-[#D4AF37] bg-yellow-955/15 px-2 py-0.5 rounded border border-[#D4AF37]/30 text-[9px] uppercase font-bold tracking-wider">TRIAGED</span>;
+        return <span className="text-[#00f0ff] bg-[#00f0ff]/10 px-2 py-0.5 rounded border border-[#00f0ff]/30 text-[9px] uppercase font-bold tracking-wider">TRIAGED</span>;
       case 'Remediated':
-        return <span className="text-emerald-450 bg-emerald-955/15 px-2 py-0.5 rounded border border-emerald-900/45 text-[9px] uppercase font-bold tracking-wider">REMEDIATED</span>;
+        return <span className="text-emerald-400 bg-emerald-950/15 px-2 py-0.5 rounded border border-emerald-900/45 text-[9px] uppercase font-bold tracking-wider">REMEDIATED</span>;
       case 'False Positive':
-        return <span className="text-zinc-400 bg-zinc-955/20 px-2 py-0.5 rounded border border-zinc-800 text-[9px] uppercase font-bold tracking-wider">FALSE POSITIVE</span>;
+        return <span className="text-zinc-400 bg-zinc-900/20 px-2 py-0.5 rounded border border-zinc-800 text-[9px] uppercase font-bold tracking-wider">FALSE POSITIVE</span>;
     }
   };
 
@@ -297,11 +333,11 @@ export default function ThreatArchive() {
       {/* Module Title bar Header */}
       <div className="border-b border-white/5 bg-gradient-to-r from-black/80 to-[#101014] px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 select-none">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 border border-[#D4AF37]/35 bg-[#D4AF37]/5 text-[#D4AF37] rounded-md">
+          <div className="p-2 border border-[#00f0ff]/35 bg-[#00f0ff]/5 text-[#00f0ff] rounded-md">
             <Archive size={15} />
           </div>
           <div>
-            <span className="text-[9px] tracking-widest text-[#D4AF37]/80 uppercase font-bold flex items-center gap-1">
+            <span className="text-[9px] tracking-widest text-[#00f0ff]/80 uppercase font-bold flex items-center gap-1">
               SECURE LOG ARCHIVE <Lock size={9} />
             </span>
             <h3 className="text-sm font-serif font-light text-zinc-100 flex items-center gap-1.5 leading-tight">
@@ -314,7 +350,7 @@ export default function ThreatArchive() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsAddingNew(true)}
-            className="px-3 py-1.5 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 border border-[#D4AF37]/30 text-[#D4AF37] hover:text-white rounded font-mono text-[9px] font-bold tracking-wider uppercase transition-all flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1.5 bg-[#00f0ff]/15 hover:bg-[#00f0ff]/25 border border-[#00f0ff]/30 text-[#00f0ff] hover:text-white rounded font-mono text-[9px] font-bold tracking-wider uppercase transition-all flex items-center gap-1 cursor-pointer"
           >
             <Plus size={11} /> File Manual Alert
           </button>
@@ -333,7 +369,7 @@ export default function ThreatArchive() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
           {/* Text Search input */}
           <div className="md:col-span-4 relative">
-            <span className="absolute left-2.5 top-2.5 text-[#D4AF37]">
+            <span className="absolute left-2.5 top-2.5 text-[#00f0ff]">
               <Search size={11} />
             </span>
             <input
@@ -341,41 +377,178 @@ export default function ThreatArchive() {
               placeholder="Search details, note signatures, payloads..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-black/70 border border-white/5 hover:border-white/10 focus:border-[#D4AF37]/50 rounded px-8 py-2 text-zinc-300 placeholder-zinc-650 focus:outline-none font-mono text-[10px] transition-all"
+              className="w-full bg-black/70 border border-white/5 hover:border-white/10 focus:border-[#00f0ff]/50 rounded px-8 py-2 text-zinc-300 placeholder-zinc-650 focus:outline-none font-mono text-[10px] transition-all"
             />
           </div>
 
           {/* Category Dropdown/Selector buttons */}
           <div className="md:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <div className="flex items-center gap-1.5 bg-[#07070A] border border-white/5 p-1 rounded">
-              <span className="text-[8px] text-white/35 uppercase min-w-fit pl-1">MODULE:</span>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="bg-transparent text-zinc-200 text-[10px] font-mono focus:outline-none cursor-pointer flex-1 py-0.5 px-1"
+            {/* Category Filter Multi-Select */}
+            <div className="relative flex flex-col justify-center bg-[#07070A] border border-white/5 p-1 rounded min-h-[32px]">
+              {isCategoryDropdownOpen && (
+                <div 
+                  className="fixed inset-0 z-40 cursor-default" 
+                  onClick={() => setIsCategoryDropdownOpen(false)} 
+                />
+              )}
+              <div 
+                onClick={() => {
+                  setIsCategoryDropdownOpen(!isCategoryDropdownOpen);
+                  setIsSeverityDropdownOpen(false);
+                }}
+                className="flex items-center justify-between gap-1.5 px-1.5 py-0.5 cursor-pointer select-none text-zinc-200 text-[10px] font-mono"
               >
-                <option value="ALL" className="bg-[#0A0A0C]">All Sources</option>
-                <option value="ebpf" className="bg-[#0A0A0C]">eBPF Telemetry</option>
-                <option value="ast" className="bg-[#0A0A0C]">AST Static Scan</option>
-              </select>
+                <div className="flex items-center gap-1.5 overflow-hidden truncate">
+                  <span className="text-[8px] text-white/35 uppercase min-w-fit font-bold">MODULES:</span>
+                  <span className="truncate text-[#00f0ff] font-semibold">{categoryLabel}</span>
+                </div>
+                <ChevronRight 
+                  size={10} 
+                  className={`text-[#00f0ff] transition-transform duration-200 shrink-0 ${isCategoryDropdownOpen ? 'rotate-90' : ''}`} 
+                />
+              </div>
+
+              <AnimatePresence>
+                {isCategoryDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 right-0 z-50 mt-1.5 bg-[#0C0C10] border border-white/10 rounded shadow-[0_10px_25px_rgba(0,0,0,0.8)] p-2.5 space-y-2 font-mono text-[10px]"
+                  >
+                    <div className="flex items-center justify-between border-b border-white/5 pb-1.5 mb-1.5 text-[9px] text-white/40">
+                      <span>SELECT FILTER SOURCES</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (categoryFilters.length === CATEGORY_OPTIONS.length) {
+                            setCategoryFilters([]);
+                          } else {
+                            setCategoryFilters(CATEGORY_OPTIONS.map(o => o.id));
+                          }
+                        }}
+                        className="text-[#00f0ff] hover:underline font-bold uppercase"
+                      >
+                        {categoryFilters.length === CATEGORY_OPTIONS.length ? "Clear All" : "Select All"}
+                      </button>
+                    </div>
+                    <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                      {CATEGORY_OPTIONS.map((opt) => {
+                        const isChecked = categoryFilters.includes(opt.id);
+                        return (
+                          <label
+                            key={opt.id}
+                            className="flex items-center gap-2 px-1.5 py-1 hover:bg-white/5 rounded cursor-pointer text-zinc-300 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setCategoryFilters(categoryFilters.filter(c => c !== opt.id));
+                                } else {
+                                  setCategoryFilters([...categoryFilters, opt.id]);
+                                }
+                              }}
+                              className="accent-[#00f0ff] h-3 w-3 rounded border-white/10 bg-black cursor-pointer"
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-[#07070A] border border-white/5 p-1 rounded">
-              <span className="text-[8px] text-white/35 uppercase min-w-fit pl-1">SEVERITY:</span>
-              <select
-                value={severityFilter}
-                onChange={(e) => setSeverityFilter(e.target.value)}
-                className="bg-transparent text-zinc-200 text-[10px] font-mono focus:outline-none cursor-pointer flex-1 py-0.5 px-1"
+            {/* Severity Filter Multi-Select */}
+            <div className="relative flex flex-col justify-center bg-[#07070A] border border-white/5 p-1 rounded min-h-[32px]">
+              {isSeverityDropdownOpen && (
+                <div 
+                  className="fixed inset-0 z-40 cursor-default" 
+                  onClick={() => setIsSeverityDropdownOpen(false)} 
+                />
+              )}
+              <div 
+                onClick={() => {
+                  setIsSeverityDropdownOpen(!isSeverityDropdownOpen);
+                  setIsCategoryDropdownOpen(false);
+                }}
+                className="flex items-center justify-between gap-1.5 px-1.5 py-0.5 cursor-pointer select-none text-zinc-200 text-[10px] font-mono"
               >
-                <option value="ALL" className="bg-[#0A0A0C]">All Severities</option>
-                <option value="high" className="bg-[#0A0A0C]">Critical</option>
-                <option value="medium" className="bg-[#0A0A0C]">Medium</option>
-                <option value="low" className="bg-[#0A0A0C]">Low</option>
-              </select>
+                <div className="flex items-center gap-1.5 overflow-hidden truncate">
+                  <span className="text-[8px] text-white/35 uppercase min-w-fit font-bold">SEVERITIES:</span>
+                  <span className="truncate text-[#00f0ff] font-semibold">{severityLabel}</span>
+                </div>
+                <ChevronRight 
+                  size={10} 
+                  className={`text-[#00f0ff] transition-transform duration-200 shrink-0 ${isSeverityDropdownOpen ? 'rotate-90' : ''}`} 
+                />
+              </div>
+
+              <AnimatePresence>
+                {isSeverityDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 right-0 z-50 mt-1.5 bg-[#0C0C10] border border-white/10 rounded shadow-[0_10px_25px_rgba(0,0,0,0.8)] p-2.5 space-y-2 font-mono text-[10px]"
+                  >
+                    <div className="flex items-center justify-between border-b border-white/5 pb-1.5 mb-1.5 text-[9px] text-white/40">
+                      <span>SELECT FILTER SEVERITIES</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (severityFilters.length === SEVERITY_OPTIONS.length) {
+                            setSeverityFilters([]);
+                          } else {
+                            setSeverityFilters(SEVERITY_OPTIONS.map(o => o.id));
+                          }
+                        }}
+                        className="text-[#00f0ff] hover:underline font-bold uppercase"
+                      >
+                        {severityFilters.length === SEVERITY_OPTIONS.length ? "Clear All" : "Select All"}
+                      </button>
+                    </div>
+                    <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                      {SEVERITY_OPTIONS.map((opt) => {
+                        const isChecked = severityFilters.includes(opt.id);
+                        return (
+                          <label
+                            key={opt.id}
+                            className="flex items-center gap-2 px-1.5 py-1 hover:bg-white/5 rounded cursor-pointer text-zinc-300 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSeverityFilters(severityFilters.filter(s => s !== opt.id));
+                                } else {
+                                  setSeverityFilters([...severityFilters, opt.id]);
+                                }
+                              }}
+                              className="accent-[#00f0ff] h-3 w-3 rounded border-white/10 bg-black cursor-pointer"
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-[#07070A] border border-white/5 p-1 rounded">
-              <span className="text-[8px] text-white/35 uppercase min-w-fit pl-1">STATUS:</span>
+            <div className="flex items-center gap-1.5 bg-[#07070A] border border-white/5 p-1 rounded min-h-[32px]">
+              <span className="text-[8px] text-white/35 uppercase min-w-fit pl-1 font-bold">STATUS:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -401,7 +574,7 @@ export default function ThreatArchive() {
             <div className="space-x-1.5">
               <button 
                 onClick={handleResetToSeeds}
-                className="hover:text-[#D4AF37] transition-all cursor-pointer font-bold uppercase"
+                className="hover:text-[#00f0ff] transition-all cursor-pointer font-bold uppercase"
               >
                 Reset Default specimens
               </button>
@@ -433,7 +606,7 @@ export default function ThreatArchive() {
                       onClick={() => setSelectedThreatId(threat.id)}
                       className={`p-3.5 border rounded-lg cursor-pointer transition-all select-none group relative ${
                         isSelected 
-                          ? 'bg-[#101014] border-[#D4AF37]/50 shadow-[0_0_15px_rgba(212,175,55,0.06)] border-l-2 border-l-[#D4AF37]' 
+                          ? 'bg-[#101014] border-[#00f0ff]/50 shadow-[0_0_15px_rgba(0,240,255,0.06)] border-l-2 border-l-[#00f0ff]' 
                           : 'bg-black/40 border-white/5 hover:border-white/10 hover:bg-black/60'
                       }`}
                     >
@@ -442,8 +615,8 @@ export default function ThreatArchive() {
                           <div className="flex items-center gap-2">
                             <span className={`text-[8.5px] uppercase font-bold px-1.5 rounded tracking-wide ${
                               threat.category === 'ebpf' 
-                                ? 'bg-fuchsia-955/20 text-fuchsia-400 border border-fuchsia-900/30' 
-                                : 'bg-sky-955/20 text-sky-400 border border-sky-900/30'
+                                ? 'bg-fuchsia-905/20 text-fuchsia-400 border border-fuchsia-900/30' 
+                                : 'bg-sky-950/20 text-sky-400 border border-sky-900/30'
                             }`}>
                               {threat.category}
                             </span>
@@ -492,7 +665,7 @@ export default function ThreatArchive() {
                 {/* Event Name */}
                 <div className="border-b border-white/5 pb-3">
                   <div className="text-[8px] font-bold tracking-wider text-white/30 uppercase flex items-center gap-1 select-none">
-                    <Clock size={10} /> Preserved incident ID: <strong className="text-[#D4AF37] font-semibold">{activeThreat.id}</strong>
+                    <Clock size={10} /> Preserved incident ID: <strong className="text-[#00f0ff] font-semibold">{activeThreat.id}</strong>
                   </div>
                   <h4 className="text-sm font-serif font-light text-zinc-100 mt-1 lines-clamp-2 leading-relaxed">
                     {activeThreat.name}
@@ -514,7 +687,7 @@ export default function ThreatArchive() {
                 <div className="space-y-1.5">
                   <div className="text-[8.5px] text-zinc-550 font-bold uppercase tracking-wider flex items-center justify-between select-none">
                     <span>Raw Execution Context / Syscall Args</span>
-                    <span className="text-[8px] text-rose-450 uppercase tracking-widest font-bold">Unsanitized Payload</span>
+                    <span className="text-[8px] text-rose-400 uppercase tracking-widest font-bold">Unsanitized Payload</span>
                   </div>
                   <div className="bg-black border border-white/5 rounded p-3 text-rose-300 leading-normal text-[10.5px] max-h-24 overflow-y-auto whitespace-pre overflow-x-auto select-all selection:bg-rose-950 font-mono">
                     <code>{activeThreat.rawPayload}</code>
@@ -526,7 +699,7 @@ export default function ThreatArchive() {
                   <div>
                     <span className="block text-[8px] text-white/35 uppercase">Assigned Officer</span>
                     <span className="text-zinc-300 block mt-0.5 text-[10.5px] select-all flex items-center gap-1">
-                      <User size={10} className="text-[#D4AF37]" /> {activeThreat.assignedOfficer || "Unassigned"}
+                      <User size={10} className="text-[#00f0ff]" /> {activeThreat.assignedOfficer || "Unassigned"}
                     </span>
                   </div>
                   <div>
@@ -534,7 +707,7 @@ export default function ThreatArchive() {
                     <select
                       value={activeThreat.status}
                       onChange={(e) => handleUpdateStatus(e.target.value as ArchivedThreat['status'])}
-                      className="bg-black border border-white/5 hover:border-white/10 rounded px-2 py-1 text-[10px] text-[#D4AF37] font-mono focus:outline-none cursor-pointer w-full font-bold"
+                      className="bg-black border border-white/5 hover:border-white/10 rounded px-2 py-1 text-[10px] text-[#00f0ff] font-mono focus:outline-none cursor-pointer w-full font-bold"
                     >
                       <option value="Unresolved">Unresolved</option>
                       <option value="Triaged">Triaged</option>
@@ -548,12 +721,12 @@ export default function ThreatArchive() {
                 <div className="space-y-2 border-t border-white/5 pt-3">
                   <div className="flex items-center justify-between select-none">
                     <span className="text-[8.5px] text-zinc-550 font-bold uppercase tracking-wider flex items-center gap-1">
-                      <FileText size={11} className="text-[#D4AF37]" /> Researcher Annotations & Notes
+                      <FileText size={11} className="text-[#00f0ff]" /> Researcher Annotations & Notes
                     </span>
                     {!isEditingNotes ? (
                       <button
                         onClick={() => setIsEditingNotes(true)}
-                        className="text-[9px] text-[#D4AF37] hover:text-white transition-all cursor-pointer font-bold uppercase flex items-center gap-0.5"
+                        className="text-[9px] text-[#00f0ff] hover:text-white transition-all cursor-pointer font-bold uppercase flex items-center gap-0.5"
                       >
                         <Edit3 size={10} /> Edit Notes
                       </button>
@@ -587,7 +760,7 @@ export default function ThreatArchive() {
                       value={editingNotes}
                       onChange={(e) => setEditingNotes(e.target.value)}
                       placeholder="Input custom forensic assessments or remediation comments..."
-                      className="w-full bg-black border border-white/10 focus:border-[#D4AF37]/50 rounded p-2 text-zinc-300 min-h-20 focus:outline-none font-mono text-[10px] transition-all"
+                      className="w-full bg-black border border-white/10 focus:border-[#00f0ff]/50 rounded p-2 text-zinc-300 min-h-20 focus:outline-none font-mono text-[10px] transition-all"
                     />
                   )}
                 </div>
@@ -597,7 +770,7 @@ export default function ThreatArchive() {
               {/* Sandbox Metadata Enclave stamps info */}
               <div className="border-t border-white/5 pt-3.5 mt-3 select-none">
                 <div className="flex items-center gap-1.5 text-zinc-600 text-[8.5px] font-mono leading-relaxed">
-                  <Sparkles size={11} className="text-[#D4AF37]" /> SGX Enclave Secure Seal: VALIDATING_SEAL_SUCCESS_STAMP
+                  <Sparkles size={11} className="text-[#00f0ff]" /> SGX Enclave Secure Seal: VALIDATING_SEAL_SUCCESS_STAMP
                 </div>
               </div>
 
@@ -631,7 +804,7 @@ export default function ThreatArchive() {
             >
               <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
                 <h4 className="text-xs font-serif font-light text-zinc-100 flex items-center gap-1.5 leading-tight select-none">
-                  <Plus size={13} className="text-[#D4AF37]" /> File Manual Threat Incident Log
+                  <Plus size={13} className="text-[#00f0ff]" /> File Manual Threat Incident Log
                 </h4>
                 <button
                   onClick={() => setIsAddingNew(false)}
@@ -651,7 +824,7 @@ export default function ThreatArchive() {
                     placeholder="e.g. Reverse socket pipe execution flagged"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full bg-black border border-white/5 focus:border-[#D4AF37]/50 focus:outline-none rounded px-3 py-2 text-zinc-200"
+                    className="w-full bg-black border border-white/5 focus:border-[#00f0ff]/50 focus:outline-none rounded px-3 py-2 text-zinc-200"
                   />
                 </div>
 
@@ -662,7 +835,7 @@ export default function ThreatArchive() {
                     <select
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value as 'ebpf' | 'ast')}
-                      className="w-full bg-black border border-white/5 focus:border-[#D4AF37]/50 focus:outline-none rounded px-2.5 py-1.5 text-zinc-200 cursor-pointer"
+                      className="w-full bg-black border border-white/5 focus:border-[#00f0ff]/50 focus:outline-none rounded px-2.5 py-1.5 text-zinc-200 cursor-pointer"
                     >
                       <option value="ebpf">eBPF Kernel Telemetry</option>
                       <option value="ast">Heuristic AST Static Scan</option>
@@ -675,7 +848,7 @@ export default function ThreatArchive() {
                     <select
                       value={newSeverity}
                       onChange={(e) => setNewSeverity(e.target.value as 'low' | 'medium' | 'high')}
-                      className="w-full bg-black border border-white/5 focus:border-[#D4AF37]/50 focus:outline-none rounded px-2.5 py-1.5 text-zinc-200 cursor-pointer"
+                      className="w-full bg-black border border-white/5 focus:border-[#00f0ff]/50 focus:outline-none rounded px-2.5 py-1.5 text-zinc-200 cursor-pointer"
                     >
                       <option value="high">Critical / High</option>
                       <option value="medium">Medium Warning</option>
@@ -692,7 +865,7 @@ export default function ThreatArchive() {
                     placeholder="Provide a comprehensive operational analysis narrative showing what was triggered or intercepted."
                     value={newDetails}
                     onChange={(e) => setNewDetails(e.target.value)}
-                    className="w-full bg-black border border-white/5 focus:border-[#D4AF37]/50 focus:outline-none rounded p-2.5 text-zinc-200 min-h-[50px] leading-normal"
+                    className="w-full bg-black border border-white/5 focus:border-[#00f0ff]/50 focus:outline-none rounded p-2.5 text-zinc-200 min-h-[50px] leading-normal"
                   />
                 </div>
 
@@ -703,7 +876,7 @@ export default function ThreatArchive() {
                     placeholder="e.g. syscall=execve comm=nc pid=1409 args='-l -p 4444' status=intercepted"
                     value={newRawPayload}
                     onChange={(e) => setNewRawPayload(e.target.value)}
-                    className="w-full bg-black border border-white/5 focus:border-[#D4AF37]/50 focus:outline-none rounded p-2.5 text-[#F43F5E] min-h-[50px] font-mono leading-normal"
+                    className="w-full bg-black border border-white/5 focus:border-[#00f0ff]/50 focus:outline-none rounded p-2.5 text-[#F43F5E] min-h-[50px] font-mono leading-normal"
                   />
                 </div>
 
@@ -718,7 +891,7 @@ export default function ThreatArchive() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded bg-[#D4AF37]/20 border border-[#D4AF37]/45 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black tracking-wider uppercase font-bold text-[9px] cursor-pointer font-mono transition-all"
+                    className="px-4 py-2 rounded bg-[#00f0ff]/20 border border-[#00f0ff]/45 text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black tracking-wider uppercase font-bold text-[9px] cursor-pointer font-mono transition-all"
                   >
                     Register Historical Log
                   </button>

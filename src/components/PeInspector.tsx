@@ -103,7 +103,7 @@ export default function PeInspector({
     <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5">
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <Binary className="text-[#D4AF37] animate-pulse" size={15} />
+          <Binary className="text-[#00f0ff] animate-pulse" size={15} />
           <h2 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-100 uppercase">
             Portable Executable (PE) Analyzer
           </h2>
@@ -114,7 +114,7 @@ export default function PeInspector({
             <button
               onClick={handleExportPeHeader}
               id="btn-export-pe-section"
-              className="px-2 py-1 text-[8px] uppercase tracking-wider font-mono bg-black/40 text-[#D4AF37] border border-[#D4AF37]/35 hover:bg-[#D4AF37]/10 rounded cursor-pointer transition-colors flex items-center gap-1.5"
+              className="px-2 py-1 text-[8px] uppercase tracking-wider font-mono bg-black/40 text-[#00f0ff] border border-[#00f0ff]/35 hover:bg-[#00f0ff]/10 rounded cursor-pointer transition-colors flex items-center gap-1.5"
             >
               <Download size={9} /> Export Headers
             </button>
@@ -122,7 +122,7 @@ export default function PeInspector({
           <select
             value={selectedKey}
             onChange={(e) => setSelectedKey(e.target.value)}
-            className="bg-black border border-white/5 text-[11px] font-mono rounded p-2 text-zinc-300 focus:outline-none focus:border-[#D4AF37] cursor-pointer"
+            className="bg-black border border-white/5 text-[11px] font-mono rounded p-2 text-zinc-300 focus:outline-none focus:border-[#00f0ff] cursor-pointer"
           >
             <option value="svchost.exe">svchost.exe (System Binary)</option>
             <option value="crypt_packer.exe">crypt_untrusted_loader.exe (Packed Tool)</option>
@@ -132,8 +132,8 @@ export default function PeInspector({
       </div>
 
       <div className="mb-4 text-[11px] font-mono leading-relaxed text-white/40 bg-black/30 p-4 rounded border border-white/5">
-        <div className="flex items-center gap-1.5 text-[#D4AF37] font-bold uppercase mb-2 text-xs">
-          <Info size={12} className="text-[#D4AF37]" /> Header Diagnostics Definition
+        <div className="flex items-center gap-1.5 text-[#00f0ff] font-bold uppercase mb-2 text-xs">
+          <Info size={12} className="text-[#00f0ff]" /> Header Diagnostics Definition
         </div>
         Parses compiled system executable layouts, searching for structural compromises (like anomalous section names or writeable-and-executable segments) and checking imports for system-critical capabilities (like process hollowers or API network downloaders).
       </div>
@@ -157,7 +157,7 @@ export default function PeInspector({
               </div>
               <div className="flex justify-between items-center border-b border-white/5 pb-1">
                 <span className="text-white/30">DOS MAGIC:</span>
-                <span className="text-[#D4AF37] font-extrabold">{metadata.magic}</span>
+                <span className="text-[#00f0ff] font-extrabold">{metadata.magic}</span>
               </div>
               <div className="flex justify-between items-center border-b border-white/5 pb-1">
                 <span className="text-white/30">MACHINE TYPE:</span>
@@ -169,7 +169,7 @@ export default function PeInspector({
               </div>
               <div className="flex justify-between items-center border-b border-white/5 pb-1">
                 <span className="text-white/30">ENTRYPOINT OF CODE:</span>
-                <span className="text-[#D4AF37] font-bold font-serif">{metadata.entryPoint}</span>
+                <span className="text-[#00f0ff] font-bold font-serif">{metadata.entryPoint}</span>
               </div>
               <div className="flex justify-between items-center border-b border-white/5 pb-1">
                 <span className="text-white/30">SUBSYSTEM TYPE:</span>
@@ -187,7 +187,7 @@ export default function PeInspector({
           <div className="border border-white/5 p-4 rounded bg-black/40">
             <h3 className="text-xs font-serif font-light tracking-[0.1em] text-[#E0E0E0] uppercase border-b border-white/5 pb-2 mb-3.5 flex items-center justify-between">
               <span>DLL APIs IMPORT TABLE</span>
-              <span className="text-[9px] text-[#D4AF37] font-mono">({metadata.imports.length} APIs)</span>
+              <span className="text-[9px] text-[#00f0ff] font-mono">({metadata.imports.length} APIs)</span>
             </h3>
             <div className="space-y-1.5 font-mono text-[10px] max-h-40 overflow-y-auto">
               {metadata.imports.map((imp, idx) => {
@@ -229,7 +229,7 @@ export default function PeInspector({
                   {metadata.sections.map((sec, idx) => (
                     <tr 
                       key={idx}
-                      className={sec.anomalous ? 'bg-rose-955/15 text-rose-300' : 'text-zinc-300 hover:bg-white/[0.01] hover:text-white transition-colors'}
+                      className={sec.anomalous ? 'bg-rose-950/15 text-rose-300' : 'text-zinc-300 hover:bg-white/[0.01] hover:text-white transition-colors'}
                     >
                       <td className="py-2.5 font-bold uppercase">{sec.name}</td>
                       <td className="py-2.5 text-right font-semibold">{sec.virtualSize}</td>
@@ -245,9 +245,9 @@ export default function PeInspector({
                               key={ii}
                               className={`px-1 py-0.5 rounded text-[8px] font-black tracking-wide ${
                                 char === 'EXECUTABLE' 
-                                  ? 'bg-rose-955/20 text-rose-300 border border-rose-900/30' 
+                                  ? 'bg-rose-950/20 text-rose-300 border border-rose-900/30' 
                                   : char === 'WRITEABLE' 
-                                    ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20' 
+                                    ? 'bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/20' 
                                     : 'bg-white/5 text-white/40'
                               }`}
                             >
@@ -272,23 +272,23 @@ export default function PeInspector({
             <div className="space-y-2.5 font-mono text-[11px] leading-relaxed">
               {metadata.fileName.includes('untrusted') || metadata.fileName.includes('packer') ? (
                 <>
-                  <div className="bg-rose-955/15 border border-rose-900/30 p-3.5 rounded text-rose-300 flex items-start gap-2.5">
+                  <div className="bg-rose-950/15 border border-rose-900/30 p-3.5 rounded text-rose-300 flex items-start gap-2.5">
                     <ShieldAlert size={16} className="mt-0.5 shrink-0" />
                     <div>
                       <strong className="block font-bold text-xs uppercase mb-1">⚠️ COMPROMISE SUSPECTED: High-Entropy Packing</strong>
                       Multiple writable-and-executable (W^X violation) memory sections flagged. Standard executable segments (e.g. UPX1) possess severe entropy (<strong className="text-rose-400 font-bold">7.95 bits</strong>) while having zero-byte physical alignment offsets. Highly indicative of encrypted malware packing payloads or payload dropping structures.
                     </div>
                   </div>
-                  <div className="bg-[#D4AF37]/5 border border-[#D4AF37]/15 p-3.5 rounded text-white/70 flex items-start gap-2.5">
-                    <Info size={16} className="mt-0.5 shrink-0 text-[#D4AF37]" />
+                  <div className="bg-[#00f0ff]/5 border border-[#00f0ff]/15 p-3.5 rounded text-white/70 flex items-start gap-2.5">
+                    <Info size={16} className="mt-0.5 shrink-0 text-[#00f0ff]" />
                     <div>
-                      <strong className="block font-bold text-xs text-[#D4AF37] uppercase mb-1">⚠️ Suspicious Windows API Import Hooks</strong>
+                      <strong className="block font-bold text-xs text-[#00f0ff] uppercase mb-1">⚠️ Suspicious Windows API Import Hooks</strong>
                       File import list imports low-level handle manipulators: <strong className="text-white font-bold">LoadLibraryA</strong> and <strong className="text-white font-bold">GetProcAddress</strong>. Allows on-the-fly resolution of hidden system APIs to evade anti-virus logs.
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="bg-emerald-955/10 border border-emerald-900/20 p-3.5 rounded text-emerald-300 flex items-start gap-2.5">
+                <div className="bg-emerald-950/10 border border-emerald-900/20 p-3.5 rounded text-emerald-300 flex items-start gap-2.5">
                   <ShieldAlert size={15} className="text-emerald-400 mt-0.5 shrink-0" />
                   <div>
                     <strong className="block font-bold text-xs uppercase mb-1">✓ HEURISTIC SCORE CLEAN</strong>

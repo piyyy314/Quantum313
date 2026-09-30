@@ -148,7 +148,7 @@ export default function AstAnalyzer({
     <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5">
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
         <div className="flex items-center gap-2.5">
-          <Code2 className="text-[#D4AF37]" size={15} />
+          <Code2 className="text-[#00f0ff]" size={15} />
           <h2 className="text-xs font-serif font-light tracking-[0.2em] text-zinc-100 uppercase mr-1">
             AST Static Analysis Parser
           </h2>
@@ -156,7 +156,7 @@ export default function AstAnalyzer({
             <button
               onClick={handleExportAstReport}
               id="btn-export-ast-section"
-              className="px-2 py-0.5 text-[8px] uppercase tracking-wider font-mono bg-black/40 text-[#D4AF37] border border-[#D4AF37]/35 hover:bg-[#D4AF37]/10 rounded cursor-pointer transition-colors flex items-center gap-1"
+              className="px-2 py-0.5 text-[8px] uppercase tracking-wider font-mono bg-black/40 text-[#00f0ff] border border-[#00f0ff]/35 hover:bg-[#00f0ff]/10 rounded cursor-pointer transition-colors flex items-center gap-1"
             >
               <Download size={9} /> Export Results
             </button>
@@ -189,19 +189,19 @@ export default function AstAnalyzer({
             setSourceCode(e.target.value);
             setScanned(false);
           }}
-          className="w-full h-44 bg-black/40 text-zinc-300 font-mono text-xs rounded border border-white/5 p-3 focus:border-[#D4AF37]/50 focus:outline-none resize-none"
+          className="w-full h-44 bg-black/40 text-zinc-300 font-mono text-xs rounded border border-white/5 p-3 focus:border-[#00f0ff]/50 focus:outline-none resize-none"
           placeholder="Paste code snippet to analyze statically..."
         />
       </div>
 
       <div className="flex items-center justify-between pt-1 pb-3.5 border-b border-white/5">
-        <span className="text-[10px] text-[#D4AF37]/60 font-mono">
+        <span className="text-[10px] text-[#00f0ff]/60 font-mono">
           * Heuristic AST Simulation parses code trees to reveal dangerous subprocesses, os shells, and nested injections.
         </span>
         <button
           onClick={runAstScan}
           id="btn-run-ast-scan"
-          className="text-[10px] uppercase tracking-widest border border-[#D4AF37]/50 text-[#D4AF37] px-4 py-2 hover:bg-[#D4AF37] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(212,175,55,0.1)] cursor-pointer"
+          className="text-[10px] uppercase tracking-widest border border-[#00f0ff]/50 text-[#00f0ff] px-4 py-2 hover:bg-[#00f0ff] hover:text-black transition-all font-mono rounded shadow-[0_0_8px_rgba(0,240,255,0.1)] cursor-pointer"
         >
           Execute AST Scan
         </button>
@@ -218,7 +218,7 @@ export default function AstAnalyzer({
           </h3>
 
           {findings.length === 0 ? (
-            <div className="bg-emerald-955/10 border border-emerald-900/20 rounded-lg p-4 flex items-start gap-2.5 text-emerald-300 text-xs font-mono">
+            <div className="bg-emerald-950/10 border border-emerald-900/20 rounded-lg p-4 flex items-start gap-2.5 text-emerald-300 text-xs font-mono">
               <FileCheck size={15} className="mt-0.5 shrink-0" />
               <div>
                 <span className="font-bold uppercase block text-xs tracking-wider mb-0.5 text-emerald-200">✓ Security Integrity Verified</span>
@@ -231,9 +231,9 @@ export default function AstAnalyzer({
                 <div 
                   key={i} 
                   onClick={() => onFindingClick?.(f)}
-                  className="bg-black/40 border border-white/5 rounded p-4 cursor-pointer hover:border-[#D4AF37]/40 hover:bg-black/60 transition-all group relative select-none"
+                  className="bg-black/40 border border-white/5 rounded p-4 cursor-pointer hover:border-[#00f0ff]/40 hover:bg-black/60 transition-all group relative select-none"
                 >
-                  <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 text-[8px] text-[#D4AF37] font-bold tracking-wider uppercase font-mono transition-all">
+                  <div className="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 text-[8px] text-[#00f0ff] font-bold tracking-wider uppercase font-mono transition-all">
                     DEEP DIVE →
                   </div>
                   <div className="flex items-center justify-between font-mono text-xs mb-2">

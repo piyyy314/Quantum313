@@ -14,7 +14,8 @@ import {
   Loader2, 
   Gauge, 
   RefreshCw,
-  FileHeart
+  FileHeart,
+  AlertTriangle
 } from 'lucide-react';
 
 interface AiCoprocessorProps {
@@ -45,6 +46,8 @@ int main(int argc, char **argv) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [diagnosticsTimeMs, setDiagnosticsTimeMs] = useState<number | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState<number>(0);
+  const [isServiceBusy, setIsServiceBusy] = useState<boolean>(false);
 
   const samples = {
     code: {
@@ -105,18 +108,60 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
 
     setIsLoading(true);
     setResponseText('');
+    setIsServiceBusy(false);
+    setRetryAttempt(0);
     const startTime = Date.now();
 
+    const maxRetries = 3;
+    let delay = 1000; // start with 1s delay
+    let response: Response | null = null;
+    let apiErrorMsg = "";
+
     try {
-      const response = await fetch('/api/gemini/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          target: inputText,
-          context: additionalContext,
-          mode: activeMode
-        })
-      });
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) {
+          setRetryAttempt(attempt);
+          if (triggerToast) triggerToast(`Pipeline 503 Busy. Retrying (attempt ${attempt}/${maxRetries})...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2; // exponential backoff
+        }
+
+        try {
+          response = await fetch('/api/gemini/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              target: inputText,
+              context: additionalContext,
+              mode: activeMode
+            })
+          });
+
+          if (response.status === 503) {
+            apiErrorMsg = "503 Service Temporarily Unavailable";
+            if (attempt < maxRetries) {
+              continue; // trigger next retry loop
+            }
+          }
+          break; // success or terminal exhausted attempt
+        } catch (e: any) {
+          apiErrorMsg = e.message || "Network Timeout";
+          if (attempt < maxRetries) {
+            continue; // trigger next retry loop
+          }
+          break;
+        }
+      }
+
+      if (!response) {
+        throw new Error(apiErrorMsg || "Failed to establish tunnel pipeline.");
+      }
+
+      if (response.status === 503) {
+        setIsServiceBusy(true);
+        if (triggerToast) triggerToast('Service Temporarily Busy. Target offline after maximum retry budget.');
+        return;
+      }
 
       const data = await response.json();
       if (data.success && data.text) {
@@ -159,7 +204,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
       {/* Introduction banner */}
       <div className="bg-[#0A0A0C]/40 border border-white/5 rounded p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-serif font-light tracking-widest text-[#D4AF37] uppercase flex items-center gap-2">
+          <h2 className="text-sm font-serif font-light tracking-widest text-[#00f0ff] uppercase flex items-center gap-2">
             <Sparkles size={16} className="animate-pulse" /> Aegis AI Threat Coprocessor
           </h2>
           <p className="text-[11px] font-mono text-white/40 mt-1">
@@ -167,7 +212,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 bg-[#D4AF37]/10 text-[#D4AF37] text-[9px] font-mono font-bold px-2 py-0.5 border border-[#D4AF37]/20 rounded">
+          <span className="flex items-center gap-1 bg-[#00f0ff]/10 text-[#00f0ff] text-[9px] font-mono font-bold px-2 py-0.5 border border-[#00f0ff]/20 rounded">
             <Cpu size={10} /> HYPERVISOR BOUNDED
           </span>
         </div>
@@ -191,7 +236,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                   onClick={() => handleSelectMode('code')}
                   className={`p-2.5 rounded border text-[10px] font-mono flex items-center gap-2 cursor-pointer transition-all ${
                     activeMode === 'code'
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30'
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border-[#00f0ff]/30'
                       : 'bg-black/30 text-white/50 border-white/5 hover:border-white/10 hover:text-white/80'
                   }`}
                 >
@@ -202,7 +247,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                   onClick={() => handleSelectMode('ebpf')}
                   className={`p-2.5 rounded border text-[10px] font-mono flex items-center gap-2 cursor-pointer transition-all ${
                     activeMode === 'ebpf'
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30'
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border-[#00f0ff]/30'
                       : 'bg-black/30 text-white/50 border-white/5 hover:border-white/10 hover:text-white/80'
                   }`}
                 >
@@ -213,7 +258,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                   onClick={() => handleSelectMode('binary')}
                   className={`p-2.5 rounded border text-[10px] font-mono flex items-center gap-2 cursor-pointer transition-all ${
                     activeMode === 'binary'
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30'
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border-[#00f0ff]/30'
                       : 'bg-black/30 text-white/50 border-white/5 hover:border-white/10 hover:text-white/80'
                   }`}
                 >
@@ -224,7 +269,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                   onClick={() => handleSelectMode('general')}
                   className={`p-2.5 rounded border text-[10px] font-mono flex items-center gap-2 cursor-pointer transition-all ${
                     activeMode === 'general'
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border-[#D4AF37]/30'
+                      ? 'bg-[#00f0ff]/15 text-[#00f0ff] border-[#00f0ff]/30'
                       : 'bg-black/30 text-white/50 border-white/5 hover:border-white/10 hover:text-white/80'
                   }`}
                 >
@@ -248,7 +293,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Paste code segments, system logs, PE metadata report, or specific threat IOC hashes here..."
                 rows={11}
-                className="w-full bg-[#050507] border border-white/5 rounded p-3 font-mono text-[10px] text-white/85 placeholder:text-white/20 focus:outline-none focus:border-[#D4AF37]/45 tracking-tight resize-y"
+                className="w-full bg-[#050507] border border-white/5 rounded p-3 font-mono text-[10px] text-white/85 placeholder:text-white/20 focus:outline-none focus:border-[#00f0ff]/45 tracking-tight resize-y"
               />
             </div>
 
@@ -262,7 +307,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                 value={additionalContext}
                 onChange={(e) => setAdditionalContext(e.target.value)}
                 placeholder="Namespace info, host constraints, memory boundaries..."
-                className="w-full bg-[#050507] border border-white/5 rounded p-2.5 font-mono text-[10px] text-white/80 placeholder:text-white/25 focus:outline-none focus:border-[#D4AF37]/40 text-xs"
+                className="w-full bg-[#050507] border border-white/5 rounded p-2.5 font-mono text-[10px] text-white/80 placeholder:text-white/25 focus:outline-none focus:border-[#00f0ff]/40 text-xs"
               />
             </div>
 
@@ -271,7 +316,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
               <button
                 onClick={handleTriggerAnalysis}
                 disabled={isLoading}
-                className="flex-1 bg-[#D4AF37] text-neutral-950 font-serif text-[11px] font-semibold py-3 px-4 rounded hover:bg-[#bfa032] transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-[#00f0ff] text-neutral-950 font-serif text-[11px] font-semibold py-3 px-4 rounded hover:bg-[#00d0e0] transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
@@ -300,8 +345,8 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
           <div className="bg-[#0A0A0C]/25 border border-white/5 rounded p-4 flex items-center justify-between font-mono text-[10px]">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D4AF37]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00f0ff] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00f0ff]"></span>
               </span>
               <span className="text-white/60">Aegis Enclave Sandbox Node</span>
             </div>
@@ -317,7 +362,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
             {/* Header controls of the output console */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <div className="flex items-center gap-2">
-                <Gauge size={13} className="text-[#D4AF37]" />
+                <Gauge size={13} className="text-[#00f0ff]" />
                 <span className="text-[10px] font-mono tracking-wider text-white/50 uppercase">
                   Aegis AI Analytics Output Enclave
                 </span>
@@ -325,7 +370,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
               <div className="flex items-center gap-2">
                 {diagnosticsTimeMs && (
                   <span className="text-[9px] font-mono text-zinc-500 mr-2">
-                    Resolution Time: <span className="text-[#D4AF37]">{diagnosticsTimeMs}ms</span>
+                    Resolution Time: <span className="text-[#00f0ff]">{diagnosticsTimeMs}ms</span>
                   </span>
                 )}
                 {responseText && (
@@ -348,12 +393,54 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="h-full flex flex-col items-center justify-center space-y-3 py-20"
+                    className="h-full flex flex-col items-center justify-center space-y-4 py-20"
                   >
-                    <Loader2 size={36} className="animate-spin text-[#D4AF37]/55" />
-                    <div className="text-center space-y-1">
+                    <Loader2 size={36} className="animate-spin text-[#00f0ff]/55" />
+                    <div className="text-center space-y-1.5">
                       <p className="font-mono text-xs text-white/80">Securing Bounded AI Sandbox Session...</p>
-                      <p className="font-mono text-[9px] text-white/30 italic">Querying safe neural model at edge telemetry nodes</p>
+                      {retryAttempt > 0 ? (
+                        <p className="font-mono text-[9px] text-[#00f0ff] animate-pulse">
+                          ⚠️ 503 Temporarily Busy. Retrying query (Attempt {retryAttempt}/3)...
+                        </p>
+                      ) : (
+                        <p className="font-mono text-[9px] text-white/30 italic">Querying safe neural model at edge telemetry nodes</p>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : isServiceBusy ? (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="h-full flex flex-col items-center justify-center text-center space-y-4 py-16 px-6"
+                  >
+                    <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 text-[#00f0ff] rounded-full animate-bounce">
+                      <AlertTriangle size={32} />
+                    </div>
+                    <div className="max-w-md space-y-2">
+                      <h4 className="font-serif text-sm font-light text-white uppercase tracking-wider">
+                        SECURE AI COPROCESSOR TEMPORARILY BUSY
+                      </h4>
+                      <p className="font-mono text-[10px] text-white/50 leading-relaxed">
+                        The Google Gemini neural node is currently experiencing heavy request density or a temporary 503 Service Unavailable scenario.
+                      </p>
+                      <div className="bg-white/[0.02] border border-white/5 p-3 rounded text-[10px] font-mono text-white/40 space-y-1.5 inline-block text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff]"></span>
+                          <span>Failed to restore downstream pipeline after {retryAttempt === 0 ? 3 : retryAttempt} retries.</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+                          <span>Mitre Att&ck Shielding Level: Suspended (Static Mode Ready)</span>
+                        </div>
+                      </div>
+                      <div className="pt-2">
+                        <button
+                          onClick={handleTriggerAnalysis}
+                          className="px-4 py-2 bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 border border-[#00f0ff]/30 text-[#00f0ff] font-mono rounded text-[10px] tracking-wide uppercase cursor-pointer transition-all inline-flex items-center gap-2"
+                        >
+                          <RefreshCw size={11} /> Re-establish Pipeline Link
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ) : responseText ? (
@@ -373,7 +460,7 @@ AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
                     animate={{ opacity: 1 }}
                     className="h-full flex flex-col items-center justify-center text-center space-y-3 py-24 px-6 grayscale opacity-40 hover:grayscale-0 hover:opacity-75 transition-all cursor-default"
                   >
-                    <FileHeart size={38} className="text-[#D4AF37]" />
+                    <FileHeart size={38} className="text-[#00f0ff]" />
                     <div className="max-w-sm">
                       <h4 className="font-serif text-sm font-light text-white uppercase tracking-wider">Telemetry Diagnostics Idle</h4>
                       <p className="font-mono text-[10px] text-white/40 mt-1.5 leading-relaxed">
