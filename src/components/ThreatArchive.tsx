@@ -25,6 +25,7 @@ import {
   Terminal
 } from 'lucide-react';
 import { ArchivedThreat } from '../types';
+import ThreatIntegrityChecker from './ThreatIntegrityChecker';
 
 // Pre-seeded security incidents to display on first application load
 const SEED_THREATS: ArchivedThreat[] = [
@@ -109,6 +110,24 @@ export default function ThreatArchive() {
   const [threats, setThreats] = useState<ArchivedThreat[]>([]);
   const [selectedThreatId, setSelectedThreatId] = useState<string | null>(null);
   
+  // Sorting parameter
+  const [sortBy, setSortBy] = useState<'severity' | 'timestamp' | 'category'>('timestamp');
+
+  // Unified Toast notification system inside ThreatArchive
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+  
+  // Multi-select & AI report states
+  const [selectedThreatIds, setSelectedThreatIds] = useState<string[]>([]);
+  const [isAiReportModalOpen, setIsAiReportModalOpen] = useState(false);
+  const [aiReportText, setAiReportText] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  
   // Filtering and Searching parameters
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilters, setCategoryFilters] = useState<string[]>(['ebpf', 'ast']);
@@ -170,6 +189,8 @@ export default function ThreatArchive() {
   const saveToStorage = (updatedList: ArchivedThreat[]) => {
     setThreats(updatedList);
     localStorage.setItem('aegis_threat_archive', JSON.stringify(updatedList));
+    // Dispatch event to refresh the visual integrity fingerprint checker
+    window.dispatchEvent(new Event('aegis_archive_modified'));
   };
 
   // Automatically update the notes fields
@@ -285,11 +306,65 @@ export default function ThreatArchive() {
   const handleResetToSeeds = () => {
     saveToStorage(SEED_THREATS);
     setSelectedThreatId(null);
+    setSelectedThreatIds([]);
   };
 
-  // Process search filters
+  const handleToggleSelectThreat = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (selectedThreatIds.includes(id)) {
+      setSelectedThreatIds(selectedThreatIds.filter(tid => tid !== id));
+    } else {
+      setSelectedThreatIds([...selectedThreatIds, id]);
+    }
+  };
+
+  const handleSelectAllVisible = () => {
+    const visibleIds = filteredThreats.map(t => t.id);
+    const allSelected = visibleIds.every(id => selectedThreatIds.includes(id));
+    if (allSelected) {
+      setSelectedThreatIds(selectedThreatIds.filter(id => !visibleIds.includes(id)));
+    } else {
+      const newSelected = [...selectedThreatIds];
+      visibleIds.forEach(id => {
+        if (!newSelected.includes(id)) {
+          newSelected.push(id);
+        }
+      });
+      setSelectedThreatIds(newSelected);
+    }
+  };
+
+  const handleGenerateAiReport = async () => {
+    if (selectedThreatIds.length === 0) return;
+    
+    setIsAiLoading(true);
+    setAiReportText('');
+    setIsAiReportModalOpen(true);
+    
+    try {
+      const selectedThreatObjects = threats.filter(t => selectedThreatIds.includes(t.id));
+      const response = await fetch('/api/gemini/summarize-threats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threats: selectedThreatObjects })
+      });
+      
+      const data = await response.json();
+      if (data.success && data.text) {
+        setAiReportText(data.text);
+      } else {
+        setAiReportText(`### 🟥 Compilation Error\n\nFailed to compile AI summary report: ${data.error || 'Unknown response structure'}`);
+      }
+    } catch (err: any) {
+      setAiReportText(`### 🟥 Connection Failure\n\nFailed to reach Aegis AI Coprocessor endpoint. Error: ${err.message}`);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  // Process search filters with advanced sorting
   const filteredThreats = useMemo(() => {
-    return threats.filter(t => {
+    const filtered = threats.filter(t => {
       const matchesSearch = 
         t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -302,7 +377,24 @@ export default function ThreatArchive() {
 
       return matchesSearch && matchesCategory && matchesSeverity && matchesStatus;
     });
-  }, [threats, searchQuery, categoryFilters, severityFilters, statusFilter]);
+
+    const severityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === 'severity') {
+        const diff = severityWeight[b.severity] - severityWeight[a.severity];
+        if (diff !== 0) return diff;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      } else if (sortBy === 'category') {
+        const diff = a.category.localeCompare(b.category);
+        if (diff !== 0) return diff;
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      } else {
+        // default: newest timestamp first
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      }
+    });
+  }, [threats, searchQuery, categoryFilters, severityFilters, statusFilter, sortBy]);
 
   const getSeverityLabel = (sev: string) => {
     switch (sev) {
@@ -382,7 +474,7 @@ export default function ThreatArchive() {
           </div>
 
           {/* Category Dropdown/Selector buttons */}
-          <div className="md:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <div className="md:col-span-8 grid grid-cols-1 md:grid-cols-4 gap-3.5">
             {/* Category Filter Multi-Select */}
             <div className="relative flex flex-col justify-center bg-[#07070A] border border-white/5 p-1 rounded min-h-[32px]">
               {isCategoryDropdownOpen && (
@@ -561,6 +653,20 @@ export default function ThreatArchive() {
                 <option value="False Positive" className="bg-[#0A0A0C]">False Positive</option>
               </select>
             </div>
+
+            {/* Sorting control */}
+            <div className="flex items-center gap-1.5 bg-[#07070A] border border-white/5 p-1 rounded min-h-[32px]">
+              <span className="text-[8px] text-white/35 uppercase min-w-fit pl-1 font-bold">SORT BY:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-transparent text-zinc-200 text-[10px] font-mono focus:outline-none cursor-pointer flex-1 py-0.5 px-1 font-bold text-[#00f0ff]"
+              >
+                <option value="timestamp" className="bg-[#0A0A0C]">Timestamp (Newest)</option>
+                <option value="severity" className="bg-[#0A0A0C]">Severity (High-Low)</option>
+                <option value="category" className="bg-[#0A0A0C]">Category Grouping</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -568,8 +674,8 @@ export default function ThreatArchive() {
       {/* Main Split Layout: Archive log lines index vs Detail metadata sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[480px]">
         {/* Left Side: Incidents ledger */}
-        <div className="lg:col-span-7 bg-[#050507] border-r border-white/5 p-4 space-y-3 max-h-[500px] overflow-y-auto">
-          <div className="flex items-center justify-between text-zinc-550 text-[9px] border-b border-dashed border-zinc-900 pb-1.5 mb-2 select-none">
+        <div className="lg:col-span-7 bg-[#050507] border-r border-white/5 p-4 space-y-3.5 max-h-[500px] overflow-y-auto">
+          <div className="flex items-center justify-between text-zinc-550 text-[9px] border-b border-dashed border-zinc-900 pb-1.5 mb-1 select-none">
             <span>SHOWING {filteredThreats.length} OF {threats.length} DURABLE THREAT LOGS</span>
             <div className="space-x-1.5">
               <button 
@@ -588,6 +694,30 @@ export default function ThreatArchive() {
             </div>
           </div>
 
+          {/* Multi-Select AI control strip */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 bg-black/40 border border-white/5 rounded-md select-none">
+            <div className="flex items-center gap-2">
+              <input 
+                type="checkbox"
+                checked={filteredThreats.length > 0 && filteredThreats.every(t => selectedThreatIds.includes(t.id))}
+                onChange={handleSelectAllVisible}
+                className="accent-[#00f0ff] h-3.5 w-3.5 rounded border-white/10 bg-black cursor-pointer"
+                id="select-all-visible-checkbox"
+              />
+              <label htmlFor="select-all-visible-checkbox" className="text-[10px] text-zinc-400 font-mono cursor-pointer">
+                Select All Visible ({filteredThreats.length})
+              </label>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateAiReport}
+              disabled={selectedThreatIds.length === 0}
+              className="px-3 py-1 bg-[#00f0ff]/10 hover:bg-[#00f0ff]/20 disabled:opacity-35 border border-[#00f0ff]/30 disabled:border-white/5 rounded font-mono text-[9px] font-bold text-[#00f0ff] disabled:text-zinc-550 tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles size={11} className="shrink-0" /> Summarize Selected ({selectedThreatIds.length}) with AI
+            </button>
+          </div>
+
           {filteredThreats.length === 0 ? (
             <div className="py-24 text-center text-zinc-650 font-mono italic">
               &lt;No preserved security alerts reported under selected filters&gt;
@@ -597,6 +727,7 @@ export default function ThreatArchive() {
               <AnimatePresence initial={false}>
                 {filteredThreats.map((threat) => {
                   const isSelected = selectedThreatId === threat.id;
+                  const isChecked = selectedThreatIds.includes(threat.id);
                   return (
                     <motion.div
                       key={threat.id}
@@ -611,28 +742,46 @@ export default function ThreatArchive() {
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2.5">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[8.5px] uppercase font-bold px-1.5 rounded tracking-wide ${
-                              threat.category === 'ebpf' 
-                                ? 'bg-fuchsia-905/20 text-fuchsia-400 border border-fuchsia-900/30' 
-                                : 'bg-sky-950/20 text-sky-400 border border-sky-900/30'
-                            }`}>
-                              {threat.category}
-                            </span>
-                            {getSeverityLabel(threat.severity)}
-                            {getStatusLabel(threat.status)}
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          {/* Selector Checkbox */}
+                          <div className="pt-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedThreatIds([...selectedThreatIds, threat.id]);
+                                } else {
+                                  setSelectedThreatIds(selectedThreatIds.filter(id => id !== threat.id));
+                                }
+                              }}
+                              className="accent-[#00f0ff] h-3.5 w-3.5 rounded border-white/10 bg-black cursor-pointer"
+                            />
                           </div>
-                          
-                          <h4 className={`text-xs font-semibold leading-relaxed mt-1 ${isSelected ? 'text-zinc-100' : 'text-zinc-300'}`}>
-                            {threat.name}
-                          </h4>
-                          <p className="text-[10px] text-zinc-550 leading-relaxed font-mono truncate max-w-md">
-                            {threat.details}
-                          </p>
+
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`text-[8.5px] uppercase font-bold px-1.5 rounded tracking-wide ${
+                                threat.category === 'ebpf' 
+                                  ? 'bg-fuchsia-905/20 text-fuchsia-400 border border-fuchsia-900/30' 
+                                  : 'bg-sky-950/20 text-sky-400 border border-sky-900/30'
+                              }`}>
+                                {threat.category}
+                              </span>
+                              {getSeverityLabel(threat.severity)}
+                              {getStatusLabel(threat.status)}
+                            </div>
+                            
+                            <h4 className={`text-xs font-semibold leading-relaxed mt-1 ${isSelected ? 'text-zinc-100' : 'text-zinc-300'} truncate`}>
+                              {threat.name}
+                            </h4>
+                            <p className="text-[10px] text-zinc-550 leading-relaxed font-mono truncate">
+                              {threat.details}
+                            </p>
+                          </div>
                         </div>
                         
-                        <div className="flex flex-col items-end shrink-0 select-none space-y-1.5">
+                        <div className="flex flex-col items-end shrink-0 select-none space-y-1.5 ml-2">
                           <span className="text-[9px] text-zinc-550 italic font-mono">
                             {threat.timestamp.split('T')[1].substring(0, 8)}
                           </span>
@@ -640,6 +789,7 @@ export default function ThreatArchive() {
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteThreat(threat.id);
+                              setSelectedThreatIds(selectedThreatIds.filter(id => id !== threat.id));
                             }}
                             className="p-1 text-zinc-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-white/5 cursor-pointer"
                             title="Delete this record from durable local storage"
@@ -899,6 +1049,140 @@ export default function ThreatArchive() {
               </form>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Incident Report Modal Dialog */}
+      <AnimatePresence>
+        {isAiReportModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAiReportModalOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md cursor-pointer"
+            />
+            
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="relative w-full max-w-2xl bg-[#09090C] border border-[#00f0ff]/40 rounded-lg shadow-[0_0_50px_rgba(0,240,255,0.15)] p-6 space-y-4 z-10 font-mono text-[11px] flex flex-col max-h-[85vh]"
+            >
+              <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="text-[#00f0ff] animate-pulse" size={14} />
+                  <div>
+                    <h4 className="text-xs font-serif font-light text-zinc-100 uppercase tracking-wider">
+                      AI Tactical Forensic Coprocessor
+                    </h4>
+                    <p className="text-[9px] text-[#00f0ff] uppercase tracking-widest mt-0.5">
+                      Correlated Incident Summary & Mitigation Blueprint
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsAiReportModalOpen(false)}
+                  className="p-1 rounded text-zinc-500 hover:text-white hover:bg-white/5 cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+
+              {/* Modal Content Viewport */}
+              <div className="flex-1 overflow-y-auto pr-1">
+                {isAiLoading ? (
+                  <div className="py-16 flex flex-col items-center justify-center text-center space-y-4 font-mono select-none">
+                    <RefreshCw className="text-[#00f0ff] animate-spin" size={32} />
+                    <div className="space-y-1">
+                      <p className="text-zinc-200 text-xs tracking-wider animate-pulse">
+                        ANALYZING CONTAINMENT LOG VECTORS...
+                      </p>
+                      <p className="text-[9px] text-zinc-500 max-w-xs uppercase leading-relaxed">
+                        Querying Gemini models, building lexical threat correlation maps, and assembling actionable MITRE ATT&CK mitigation recommendations.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 text-zinc-300 leading-relaxed text-[11px] select-all font-mono whitespace-pre-wrap">
+                    {/* Render Report Header */}
+                    <div className="p-3 bg-[#00f0ff]/5 border border-[#00f0ff]/20 rounded text-[10px] text-zinc-300 flex items-center justify-between flex-wrap gap-2">
+                      <span>Incidents Digest: <strong className="text-[#00f0ff]">{selectedThreatIds.length} Correlated Logs</strong></span>
+                      <span>Target Engine: <strong className="text-zinc-100">Gemini 3.8 Flash</strong></span>
+                    </div>
+
+                    {/* Report Text (styled simple Markdown helper rendering) */}
+                    <div className="bg-black/40 border border-white/5 p-4 rounded-lg font-mono text-[11px] space-y-3 max-h-[45vh] overflow-y-auto selection:bg-cyan-950">
+                      {aiReportText}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions Footer */}
+              {!isAiLoading && (
+                <div className="flex gap-2.5 justify-end pt-3 border-t border-white/5 select-none shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiReportText);
+                    }}
+                    className="px-3.5 py-1.5 rounded bg-black/40 hover:bg-white/5 border border-white/10 text-zinc-400 hover:text-white tracking-wider uppercase font-bold text-[9px] cursor-pointer font-mono transition-all"
+                  >
+                    Copy Report
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dataStr = "data:text/markdown;charset=utf-8," + encodeURIComponent(aiReportText);
+                      const downloadAnchor = document.createElement('a');
+                      downloadAnchor.setAttribute("href", dataStr);
+                      downloadAnchor.setAttribute("download", `aegis_forensic_incident_report_${Date.now()}.md`);
+                      document.body.appendChild(downloadAnchor);
+                      downloadAnchor.click();
+                      downloadAnchor.remove();
+                    }}
+                    className="px-3.5 py-1.5 rounded bg-black/40 hover:bg-white/5 border border-white/10 text-zinc-400 hover:text-white tracking-wider uppercase font-bold text-[9px] cursor-pointer font-mono transition-all"
+                  >
+                    Download Markdown
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAiReportModalOpen(false)}
+                    className="px-4 py-1.5 rounded bg-[#00f0ff]/20 border border-[#00f0ff]/45 text-[#00f0ff] hover:bg-[#00f0ff] hover:text-black tracking-wider uppercase font-bold text-[9px] cursor-pointer font-mono transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Visual SHA-256 Integrity Checker Panel */}
+      <div className="border-t border-white/5 bg-[#040406]/55 p-4 select-none">
+        <ThreatIntegrityChecker triggerToast={triggerToast} />
+      </div>
+
+      {/* Slide-in local toast alert banner for integrity alerts */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            className="fixed bottom-6 right-6 z-50 max-w-sm bg-[#0B0B0E] border-2 border-[#00f0ff]/30 text-white p-4 rounded-lg shadow-2xl font-mono text-[10px] flex items-start gap-3.5"
+          >
+            <div className="p-1 rounded bg-[#00f0ff]/10 text-[#00f0ff] shrink-0">
+              <Lock size={12} className="animate-pulse" />
+            </div>
+            <div className="space-y-1 flex-1">
+              <div className="font-bold uppercase text-[#00f0ff] tracking-widest text-[9px]">Aegis Safe Audit</div>
+              <p className="text-zinc-300 leading-normal text-[9.5px]">{toastMessage}</p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

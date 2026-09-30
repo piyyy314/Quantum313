@@ -111,6 +111,41 @@ async function startServer() {
     });
   });
 
+  async function queryOllama(prompt: string, systemInstruction: string): Promise<string | null> {
+    const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
+    const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3";
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s timeout for fast tags probe
+      
+      const probeRes = await fetch(`${OLLAMA_URL}/api/tags`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (probeRes.ok) {
+        console.log(`[+] Ollama local instance detected. Running offline inference on local node with model: ${OLLAMA_MODEL}.`);
+        
+        const response = await fetch(`${OLLAMA_URL}/api/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: OLLAMA_MODEL,
+            prompt: `${systemInstruction}\n\n${prompt}`,
+            stream: false
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return data.response;
+        }
+      }
+    } catch {
+      // Ollama not reachable, ignore and slide over to next choices
+    }
+    return null;
+  }
+
 function generateLocalHeuristicReport(target: string, context: string, mode: string): string {
   const targetLower = target.toLowerCase();
   const contextLower = (context || "").toLowerCase();
@@ -301,33 +336,15 @@ ${findings.join("\n")}
       });
     }
 
-    if (!ai) {
-      return res.status(200).json({
-        success: true,
-        text: `### 🛡️ AEGIS SECURITY INTEL [LOCAL COPROCESSOR FALLBACK MODE]
-We detected that a **GEMINI_API_KEY** is not configured in the settings yet. 
+    const modeInstruction = mode === "code" 
+      ? "Analyze this source code looking for severe static analysis weaknesses, security flaws, memory corruption bugs, CWE patterns, logic errors or OWASP Top 10 vulnerabilities. Outline precise remediation instructions in a highly professional, dense markdown format."
+      : mode === "ebpf"
+      ? "Evaluate this kernel system call log, eBPF telemetry feed, or audit stream for malicious patterns like container breakouts, unauthorized socket bindings, or privilege escalation tricks. Provide system hardenings."
+      : mode === "binary"
+      ? "Inspect this PE / executable structure, entropy log, or PE section report. Give an overview of suspicious flags like packers, high entropy indicators, obfuscation layers, missing export tables, or non-standard segment layouts."
+      : "Conduct general deep secure forensics and threat analysis on these logs or security artifacts. Categorize the potential tactics, techniques, and procedures (TTPs) mapping to MITRE ATT&CK frames.";
 
-However, we can supply simulated security metrics for this target:
-- **Target Analysis Category:** ${mode === "code" ? "Static AST Code Verification" : mode === "ebpf" ? "eBPF Sandboxed Hook Audit" : mode === "binary" ? "PE Executable Section Inspector" : "General Threat Auditing Mode"}
-- **Target Payload Length:** ${target.length} characters
-- **Simulated Posture Grade:** **B- (Caution)**
-- **Audit Findings:** The security engine analyzed "${target.substring(0, 120)}..." and highlighted moderate risk thresholds.
-
-**🚀 Action Required:**
-To unlock continuous, highly advanced AI-grounded threat assessments from **Gemini 3.5**, simply configure your **GEMINI_API_KEY** under **Settings > Secrets** in the workspace panel.`
-      });
-    }
-
-    try {
-      const modeInstruction = mode === "code" 
-        ? "Analyze this source code looking for severe static analysis weaknesses, security flaws, memory corruption bugs, CWE patterns, logic errors or OWASP Top 10 vulnerabilities. Outline precise remediation instructions in a highly professional, dense markdown format."
-        : mode === "ebpf"
-        ? "Evaluate this kernel system call log, eBPF telemetry feed, or audit stream for malicious patterns like container breakouts, unauthorized socket bindings, or privilege escalation tricks. Provide system hardenings."
-        : mode === "binary"
-        ? "Inspect this PE / executable structure, entropy log, or PE section report. Give an overview of suspicious flags like packers, high entropy indicators, obfuscation layers, missing export tables, or non-standard segment layouts."
-        : "Conduct general deep secure forensics and threat analysis on these logs or security artifacts. Categorize the potential tactics, techniques, and procedures (TTPs) mapping to MITRE ATT&CK frames.";
-
-      const prompt = `Perform the following security operation:
+    const prompt = `Perform the following security operation:
 ${modeInstruction}
 
 Target Asset details/logs/code:
@@ -344,6 +361,37 @@ Provide your response strictly in professional cybersecurity advisor tone, with 
 3. RECOMMENDATIONS & INCIDENT RECOVERY CONTROL.
 Stay dense, modern, and detailed. Do NOT include markdown code-block wraps around the whole text, just standard formatting.`;
 
+    const systemInstruction = "You are Aegis-VMM Principal AI Forensics Coprocessor, a deep hypervisor containment advisor and static threat hunter. You speak in a highly precise, cool, professional, and dense tone.";
+
+    // 1. FIRST CHOICE: Local Ollama (Local and Secure!)
+    const localOllamaOutput = await queryOllama(prompt, systemInstruction);
+    if (localOllamaOutput) {
+      return res.json({
+        success: true,
+        text: localOllamaOutput,
+        model: "local-ollama"
+      });
+    }
+
+    // 2. SECOND CHOICE: Cloud Gemini AI (if available)
+    if (!ai) {
+      return res.status(200).json({
+        success: true,
+        text: `### 🛡️ AEGIS SECURITY INTEL [LOCAL COPROCESSOR FALLBACK MODE]
+We detected that a local **Ollama** instance is not running or responsive, and a **GEMINI_API_KEY** is not configured in the settings yet. 
+
+However, we can supply simulated security metrics for this target:
+- **Target Analysis Category:** ${mode === "code" ? "Static AST Code Verification" : mode === "ebpf" ? "eBPF Sandboxed Hook Audit" : mode === "binary" ? "PE Executable Section Inspector" : "General Threat Auditing Mode"}
+- **Target Payload Length:** ${target.length} characters
+- **Simulated Posture Grade:** **B- (Caution)**
+- **Audit Findings:** The security engine analyzed "${target.substring(0, 120)}..." and highlighted moderate risk thresholds.
+
+**🚀 Action Required:**
+To run entirely local AI models on your laptop without any data leaving your machine, simply spin up an **Ollama** server locally on port **11434** (e.g. running \`ollama run llama3\`). Alternatively, configure a **GEMINI_API_KEY** under **Settings > Secrets** in the workspace panel.`
+      });
+    }
+
+    try {
       const response = await ai.models.generateContent({
         model: "gemini-3.5-flash",
         contents: prompt,
@@ -518,6 +566,129 @@ Do NOT enclose your output in markdown code blocks or triple backticks like \`\`
       res.json({
         success: true,
         text: localRule,
+        model: "offline-heuristics"
+      });
+    }
+  });
+
+  function generateLocalThreatSummary(threats: any[]): string {
+    const highSeverityCount = threats.filter(t => t.severity === 'high').length;
+    const mediumSeverityCount = threats.filter(t => t.severity === 'medium').length;
+    const lowSeverityCount = threats.filter(t => t.severity === 'low').length;
+    
+    let summary = `### 🛡️ AEGIS SECURITY INTEL [LOCAL COPROCESSOR FALLBACK MODE]
+We compiled this unified incident report using the local offline heuristics engine because the downstream AI model is busy or GEMINI_API_KEY is not configured yet.
+
+#### 1. EXECUTIVE INCIDENT SUMMARY
+The threat vault compiled a sequence of **${threats.length}** selected threat alerts containing **${highSeverityCount}** high/critical, **${mediumSeverityCount}** medium, and **${lowSeverityCount}** low security indicators. 
+
+Key issues flagged across modules:
+`;
+
+    threats.forEach((t) => {
+      summary += `- **[${t.id}] ${t.name} (${t.category.toUpperCase()} - ${t.severity.toUpperCase()})**: ${t.details}\n`;
+    });
+
+    summary += `
+#### 2. DEEP CORRELATION & ATTACK VECTOR ANALYSIS
+Static parsing rules indicate that the correlation level among these alerts is **MODERATE**.
+`;
+
+    const hasEbpf = threats.some(t => t.category === 'ebpf');
+    const hasAst = threats.some(t => t.category === 'ast');
+
+    if (hasEbpf && hasAst) {
+      summary += `- ⚠️ **Correlation Alert**: The selected dataset contains BOTH static vulnerability indicators (AST) and active runtime signals (eBPF). This strongly suggests a scenario where static design vulnerabilities (such as command injection or SQL injection) may have been actively leveraged to gain a shell or launch anomalous processes in the kernel namespace.\n`;
+    } else if (hasEbpf) {
+      summary += `- ⚠️ **Runtime Alert**: Multiple kernel events suggest interactive intrusion patterns. Outbound socket creations combined with shell invocations point to post-exploitation interactive sessions.\n`;
+    } else if (hasAst) {
+      summary += `- ⚠️ **Static Assessment**: Multiple high-risk code constructs are present in memory. These vulnerabilities allow remote actors to hijack application logic prior to code execution.\n`;
+    }
+
+    summary += `
+#### 3. CRITICAL ACTIONABLE MITIGATIONS & HARDENING INSTRUCTIONS
+Based on offline defensive tables, please deploy the following hardening measures immediately:
+1. **Container Isolation (eBPF Mitigation)**: Restrict the SUID bit on binary execution vectors inside container definitions. Implement custom seccomp filters mapping system call bounds.
+2. **Lexical Filtering (AST Mitigation)**: Sanitize dynamic inputs using parameterized prepared statements for databases, and pass arrays instead of raw concatenation strings into command executor primitives.
+3. **Audit Hardening**: Ensure all logging pipelines are durable, read-only, and mirrored to secure air-gapped forensic log buckets.
+4. **Attestation Checks**: Enforce TEE (Trusted Execution Environment) remote attestation checkmarks for all active security controllers.
+`;
+
+    return summary;
+  }
+
+  app.post("/api/gemini/summarize-threats", async (req, res) => {
+    const { threats } = req.body;
+
+    if (!threats || !Array.isArray(threats) || threats.length === 0) {
+      return res.status(400).json({ error: "Missing or invalid required parameter: threats." });
+    }
+
+    const prompt = `You are a principal cybersecurity responder. Summarize the following selected security incident alerts from the threat archive vault and compile a unified, comprehensive incident response report with mitigation recommendations.
+  
+Selected Alerts:
+${threats.map((t: any, idx: number) => `
+[Incident #${idx + 1}]
+- ID: ${t.id}
+- Timestamp: ${t.timestamp}
+- Module Category: ${t.category}
+- Title: ${t.name}
+- Severity: ${t.severity}
+- Details: ${t.details}
+- Raw Payload: ${t.rawPayload}
+- Notes: ${t.notes || 'None'}
+`).join('\n\n')}
+  
+Provide a highly professional incident report formatted in clean Markdown with the following specific sections:
+1. EXECUTIVE INCIDENT SUMMARY (A consolidated, narrative overview of the threat vectors present)
+2. DEEP CORRELATION & ATTACK VECTOR ANALYSIS (Analyze if these alerts represent a coordinated attack, how they occurred, and their cumulative impact)
+3. CRITICAL ACTIONABLE MITIGATIONS & HARDENING INSTRUCTIONS (Numbered recommendations, specifically addressing each vulnerability or execution trace identified)
+Stay dense, modern, and detailed. Do NOT include markdown code-block wraps around the whole text, just standard formatting.`;
+
+    const systemInstruction = "You are Aegis-VMM Principal AI Forensics Coprocessor, a deep incident responder and static threat hunter. You speak in a highly precise, cool, professional, and dense tone.";
+
+    // 1. FIRST CHOICE: Local Ollama (Local and Secure!)
+    const localOllamaOutput = await queryOllama(prompt, systemInstruction);
+    if (localOllamaOutput) {
+      return res.json({
+        success: true,
+        text: localOllamaOutput,
+        model: "local-ollama"
+      });
+    }
+
+    // 2. SECOND CHOICE: Cloud Gemini
+    if (!ai) {
+      const fallbackReport = generateLocalThreatSummary(threats);
+      return res.json({
+        success: true,
+        text: fallbackReport,
+        model: "offline-heuristics"
+      });
+    }
+
+    try {
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: "You are Aegis-VMM Principal AI Forensics Coprocessor, a deep incident responder and static threat hunter. You speak in a highly precise, cool, professional, and dense tone.",
+          temperature: 0.25,
+        }
+      });
+
+      res.json({
+        success: true,
+        text: response.text,
+        model: "gemini-3.8-flash"
+      });
+    } catch (err: any) {
+      console.log("[!] AI Threat Summarization runtime fallback occurred (caught gracefully):", err?.message || err);
+      const fallbackReport = generateLocalThreatSummary(threats);
+      res.json({
+        success: true,
+        text: fallbackReport,
         model: "offline-heuristics"
       });
     }

@@ -14,7 +14,7 @@ export default function NetworkAnalysis({ triggerToast }: NetworkAnalysisProps) 
   const [activeTab, setActiveTab] = useState<'network' | 'pwd' | 'social' | 'sandbox' | 'forensics' | 'reports' | 'jamming' | 'ids' | 'compliance'>('network');
 
   // 3. Network Analysis states
-  const [hostIp, setHostIp] = useState('192.168.1.55');
+  const [hostIp, setHostIp] = useState('ground-controller.aegis.local');
   const [scanOutput, setScanOutput] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
 

