@@ -6,11 +6,32 @@ import { ethers } from "ethers";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
+// Rate limiting middleware to prevent denial of service (DoS) attacks on file system and API endpoints (CWE-770, CWE-400, CWE-307)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // Limit each IP to 500 requests per 15-minute window
+  standardHeaders: true, // Return standard `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: { error: "Too many requests from this IP, please try again after 15 minutes." }
+});
+
+const staticFileLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per 15-minute window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests from this IP address, please try again after 15 minutes."
+});
+
 async function startServer() {
   const app = express();
+  
+  // Rate limiter applied across all application endpoints
+  app.use(apiLimiter);
   
   // Parse incoming JSON requests for AI diagnostics inputs
   app.use(express.json());
@@ -742,8 +763,10 @@ Stay dense, modern, and detailed. Do NOT include markdown code-block wraps aroun
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
+    // Explicit rate limiter on file system operations to prevent Denial of Service (CWE-770, CWE-400)
+    app.use(staticFileLimiter);
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get("*", staticFileLimiter, (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }

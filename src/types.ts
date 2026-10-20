@@ -12,6 +12,13 @@ export interface SysCallAlert {
   severity: 'low' | 'medium' | 'high';
 }
 
+export interface ChainOfCustodyEntry {
+  investigator: string;
+  action: string;
+  timestamp: string;
+  hashProof?: string;
+}
+
 export interface ArchivedThreat {
   id: string;
   timestamp: string;
@@ -24,6 +31,11 @@ export interface ArchivedThreat {
   status: 'Unresolved' | 'Triaged' | 'Remediated' | 'False Positive';
   assignedOfficer?: string;
   meta: Record<string, any>;
+  tags?: string[];
+  mitreTactic?: string;
+  mitreTechnique?: string;
+  chainOfCustody?: ChainOfCustodyEntry[];
+  isBookmarked?: boolean;
 }
 
 export interface EbpfRule {
